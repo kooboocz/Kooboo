@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Interface;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Interface;
 using Kooboo.Data.Models;
 using Newtonsoft.Json.Linq;
 using System;
@@ -143,7 +145,7 @@ namespace Kooboo.Data.Context
             {
                 foreach (var item in dictitems.Values)
                 {
-                    if (Kooboo.Lib.Reflection.TypeHelper.IsCollection(item.GetType()))
+                    if (Kooboo.Lib.Reflection.TypeHelper.IsGenericCollection(item.GetType()))
                     {
                         continue;
                     }
@@ -380,7 +382,20 @@ namespace Kooboo.Data.Context
                     return null;
                 }
 
-                if (jsObject is IDictionary<string, object>)
+                if (jsObject is IDynamic)
+                {
+                    var content = jsObject as IDynamic;
+                    if (this.renderContext == null)
+                    {
+                        return content.GetValue(PropertyName);
+                    }
+                    else
+                    {
+                        return content.GetValue(PropertyName, renderContext);
+                    }
+                }
+
+                else  if (jsObject is IDictionary<string, object>)
                 {
                     IDictionary<String, Object> rightvalue = jsObject as IDictionary<String, Object>;
                     if (rightvalue != null)
@@ -413,6 +428,11 @@ namespace Kooboo.Data.Context
                             return result;
                         }
                         return null;
+                    }
+                    else if (jsObject is Newtonsoft.Json.Linq.JObject)
+                    {
+                        var jobj = jsObject as Newtonsoft.Json.Linq.JObject;
+                        return jobj.GetValue(PropertyName); 
                     }
                     else
                     {
@@ -459,14 +479,27 @@ namespace Kooboo.Data.Context
                     }
                     else
                     {
-                        var type = item.GetType();
 
-                        if (!type.IsValueType || !type.IsPrimitive)
+                        if (item is IDictionary)
                         {
-                            result = getMember(item, query.MemberName);
+                            var idic = item as IDictionary;
+                            result = _getDictValueCaseInsensitive(idic, query.MemberName);
                             if (result != null)
                             {
                                 return result;
+                            }
+                        }
+                        else
+                        { 
+                            var type = item.GetType();
+
+                            if (!type.IsValueType || !type.IsPrimitive)
+                            {
+                                result = getMember(item, query.MemberName);
+                                if (result != null)
+                                {
+                                    return result;
+                                }
                             }
                         }
 
@@ -574,7 +607,7 @@ namespace Kooboo.Data.Context
             if (query.IsMember)
             {
                 var jsvalue = engine.GetValue(query.MemberName);
-                if (jsvalue != null)
+                if (jsvalue != null && jsvalue.Type != Jint.Runtime.Types.Undefined)
                 {
                     return jsvalue.ToObject();
                 }
@@ -583,7 +616,7 @@ namespace Kooboo.Data.Context
             {
                 var value = engine.GetValue(query.Key);
 
-                if (value != null)
+                if (value != null && value.Type != Jint.Runtime.Types.Undefined)
                 {
                     string[] subs = query.SubProperty.Split(".".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
@@ -603,7 +636,7 @@ namespace Kooboo.Data.Context
                         if (rightvalue is Jint.Native.JsValue)
                         {
                             var jsvalue = rightvalue as Jint.Native.JsValue;
-                            if (jsvalue != null)
+                            if (jsvalue != null && jsvalue.Type != Jint.Runtime.Types.Undefined)
                             {
                                 return jsvalue.ToObject();
                             }
@@ -643,7 +676,16 @@ namespace Kooboo.Data.Context
             // Get Value from KScript variables... 
             if (hasvalidchar(query))
             {
-                return GetValueFromKScript(query);
+                var jsresult  =  GetValueFromKScript(query);
+                if (jsresult !=null)
+                {
+                    var type = jsresult.GetType(); 
+                    if (!type.Name.Contains("Func"))
+                    {
+                       return jsresult; 
+                    }
+                }
+                
             }
             return null;
         }
@@ -808,9 +850,17 @@ namespace Kooboo.Data.Context
             {
                 return this.CurrentCounter.Current == 1;
             }
+           else if (lower == "!first" || lower == "nonfirst")
+            {
+                return this.CurrentCounter.Current != 1; 
+            }
             else if (lower == "last")
             {
                 return this.CurrentCounter.Current == this.CurrentCounter.Total;
+            }
+            else if (lower == "!last" || lower == "nonlast")
+            {
+                return this.CurrentCounter.Current != this.CurrentCounter.Total;
             }
             else
             {

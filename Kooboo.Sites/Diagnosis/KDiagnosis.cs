@@ -1,4 +1,7 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +11,11 @@ namespace Kooboo.Sites.Diagnosis
 {
   public  class KDiagnosis
     {
+
+        [KIgnore]
         public DiagnosisSession session { get; set; }
 
+        [KIgnore]
         public string headline
         {
             get
@@ -27,11 +33,12 @@ namespace Kooboo.Sites.Diagnosis
             this.session = session; 
         }
 
+        [KIgnore]
         public void onError(string message)
         {
             this.session.AddMessage(new Message() { body = message, Type = MessageType.Critical }); 
         }
-
+        [KIgnore]
         public void  error(string message)
         {
             onError(message); 
@@ -40,12 +47,12 @@ namespace Kooboo.Sites.Diagnosis
         {
             onError(message);
         }
-
+        [KIgnore]
         public void onInfo(string message)
         {
             this.session.AddMessage(new Message() { body = message, Type = MessageType.Information }); 
         }
-
+        [KIgnore]
         public void info(string message)
         {
             onInfo(message); 
@@ -55,12 +62,12 @@ namespace Kooboo.Sites.Diagnosis
         {
             onInfo(message);
         }
-
+        [KIgnore]
         public void onWarning(string message)
         {
             this.session.AddMessage(new Message() { body = message, Type = MessageType.Warning }); 
         }
-
+        [KIgnore]
         public void warning(string message)
         {
             this.onWarning(message); 

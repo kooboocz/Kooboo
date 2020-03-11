@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;   
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System.Collections.Generic;   
 using Kooboo.Tasks;
 
 namespace Kooboo.Mail
@@ -43,8 +45,7 @@ namespace Kooboo.Mail
             foreach (var each in Workers)
             {
                 each.Start();
-            } 
-
+            }  
             Mail.Queue.MailQueueWorker.Instance.Start(); 
         }
 

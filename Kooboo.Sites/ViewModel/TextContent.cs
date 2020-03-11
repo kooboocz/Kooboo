@@ -1,18 +1,22 @@
-﻿using Kooboo.Data.Interface;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Interface;
 using System;
 using System.Collections.Generic;
 using Kooboo.Data.Context;
 using Kooboo.Sites.Extensions;
 using System.Linq;
 using Kooboo.Sites.Contents.Models;
+using Kooboo.Sites.DataTraceAndModify;
 
 namespace Kooboo.Sites.ViewModel
 {
-    public class TextContentViewModel : IDynamic
+    public class TextContentViewModel : IDynamic, ITraceability
     {
         public Guid Id { get; set; }
 
         public string UserKey { get; set; }
+
         public Guid FolderId { get; set; }
 
         public Guid ParentId { get; set; }
@@ -23,10 +27,10 @@ namespace Kooboo.Sites.ViewModel
 
         public Dictionary<Guid, List<Guid>> Embedded = new Dictionary<Guid, List<Guid>>();
 
-        public Dictionary<string, string> Values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> TextValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public Object GetValue(string FieldName)
-        {  
+        {
             string lower = FieldName.ToLower();
 
             if (lower == "userkey")
@@ -43,15 +47,15 @@ namespace Kooboo.Sites.ViewModel
             }
             else if (lower == "sequence")
             {
-                return this.Order; 
+                return this.Order;
             }
 
-            if (Values.ContainsKey(FieldName))
+            if (TextValues.ContainsKey(FieldName))
             {
-                return Values[FieldName];
+                return TextValues[FieldName];
             }
-   
-              if (lower == "parentid")
+
+            if (lower == "parentid")
             {
                 return this.ParentId;
             }
@@ -80,12 +84,12 @@ namespace Kooboo.Sites.ViewModel
 
         public void SetValue(string FieldName, object Value)
         {
-            this.Values[FieldName] = Value.ToString();
+            this.TextValues[FieldName] = Value.ToString();
         }
 
         public Object GetValue(string FieldName, RenderContext Context)
         {
-            string culture = Context.Culture; 
+            string culture = Context.Culture;
 
             var result = GetValue(FieldName);
             if (result == null && Context != null)
@@ -138,7 +142,7 @@ namespace Kooboo.Sites.ViewModel
                             var ids = this.Embedded[embed.FolderId];
 
                             if (ids != null && ids.Count() > 0)
-                            { 
+                            {
                                 foreach (var item in ids)
                                 {
                                     var view = sitedb.TextContent.GetView(item, culture);
@@ -163,7 +167,7 @@ namespace Kooboo.Sites.ViewModel
                                 }
                             }
                         }
-                        return emresult.OrderByDescending(o=>o.LastModified).ToList(); 
+                        return emresult.OrderByDescending(o => o.LastModified).ToList();
                     }
                 }
             }
@@ -171,13 +175,39 @@ namespace Kooboo.Sites.ViewModel
             return result;
         }
 
+        public IDictionary<string, string> GetTraceInfo()
+        {
+            return new Dictionary<string, string>
+            {
+                { "id",Id.ToString()}
+            };
+        }
+
         public DateTime LastModified { get; set; }
 
         public DateTime CreationDate { get; set; }
 
         public bool Online { get; set; }
+
+        public Dictionary<string, object> Values
+        {
+            get
+            {
+                var result = this.TextValues.ToDictionary(o => o.Key, o => (object)o.Value);
+                result["Id"] = this.Id.ToString();
+                result["ParentId"] = this.ParentId.ToString();
+                result["ContentTypeId"] = this.ContentTypeId.ToString();
+                result["UserKey"] = this.UserKey;
+                result["LastModified"] = this.LastModified.ToString();
+                result["Online"] = this.Online.ToString();
+
+                return result;
+            }
+        }
+
+        public string Source => "textcontent";
     }
-     
+
     public class EmbeddedContentViewModel
     {
         public ContentFolder EmbeddedFolder { get; set; }
@@ -185,4 +215,14 @@ namespace Kooboo.Sites.ViewModel
         public string Alias { get; set; }
 
     }
+
+
+    public class EmbeddedBy
+    {
+        public string FolderName { get; set; }
+
+        public Guid FolderId { get; set; }
+    }
+
+
 }

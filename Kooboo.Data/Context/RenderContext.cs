@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -23,6 +25,8 @@ namespace Kooboo.Data.Context
         }
 
         private HttpResponse _response;
+
+        public bool EnableTextGZip { get; set; } = true; 
 
         public HttpResponse Response
         {
@@ -110,11 +114,17 @@ namespace Kooboo.Data.Context
                 if (_culture == null)
                 {             
                     _culture = RequestManager.GetSetCulture(this.WebSite, this);
-                    if (_culture == null && this.WebSite != null)
+                    if (_culture == null)
                     {
-                        _culture = this.WebSite.DefaultCulture;
-                    }
-
+                        if (this.WebSite !=null)
+                        {
+                            _culture = this.WebSite.DefaultCulture;
+                        }
+                        else
+                        {
+                            _culture = AppSettings.CmsLang; // default
+                        } 
+                    } 
                 }
                 return _culture;
             }
@@ -260,6 +270,8 @@ namespace Kooboo.Data.Context
 
         public bool IsSiteBinding { get; set; }
 
+        public bool IsApp { get; set; }
 
+        public string AppParentUrl { get; set; }    
     }
 }

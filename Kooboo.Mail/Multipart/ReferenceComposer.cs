@@ -1,14 +1,9 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Mail.Utility;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Kooboo.Data;
 using Kooboo.Data.Language;
 using LumiSoft.Net.MIME;
-using Kooboo.Data.Models;
 using Kooboo.Mail.ViewModel;
 
 namespace Kooboo.Mail.Multipart
@@ -84,15 +79,32 @@ namespace Kooboo.Mail.Multipart
             {
                 return null;
             }
-            var mime = MessageUtility.ParseMineMessage(msgbody);
 
+            return ComposeRefMsg(context, msgbody, MsgId);
+        }
+
+        public static string ComposeRefMsg(RenderContext context, string msgbody, int MsgId)
+        {
+            var mime = MessageUtility.ParseMineMessage(msgbody);
             return ComposeRefMsg(mime, context, MsgId);
         }
 
         public static string ComposeRefMsg(MIME_Message mime, RenderContext context, int MsgId)
         {
             var bodywithheader = ComposeHeader(mime, context);
-            string htmlbody = BodyComposer.RestoreInlineImages(MessageUtility.GetHtmlBody(mime), context.User, MsgId);
+
+            string mailbody = MessageUtility.GetHtmlBody(mime); 
+            if (mailbody == null)
+            {
+                mailbody = MessageUtility.GetTextBody(mime); 
+            }
+
+            if (mailbody == null)
+            {
+                mailbody = MessageUtility.GetAnyTextBody(mime);
+            } 
+
+            string htmlbody = BodyComposer.RestoreInlineImages(mailbody, context.User, MsgId);
             return bodywithheader.Replace("{{htmlbody}}", htmlbody);
         }
 
@@ -125,6 +137,8 @@ namespace Kooboo.Mail.Multipart
             {
                 value = value.Replace("\"", "");
                 value = value.Replace("'", "");
+                value = value.Replace("<", "&lt;");
+                value = value.Replace(">", "&gt;");
             }
             return value;
         }

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using Kooboo.Data.Models;
 using System.IO;
@@ -38,7 +40,14 @@ namespace Kooboo.Sites.Sync
                             return;
                         }
 
-                        IOHelper.EnsureDirectoryExists(WebSite.DiskSyncFolder);
+                        try
+                        {
+                            IOHelper.EnsureDirectoryExists(WebSite.DiskSyncFolder);
+                        }
+                        catch (Exception)
+                        {
+                            return;
+                        }
 
                         FileSystemWatcher watcher = new System.IO.FileSystemWatcher(WebSite.DiskSyncFolder);
 

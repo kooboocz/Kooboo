@@ -1,3 +1,5 @@
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
@@ -39,6 +41,7 @@ namespace Microsoft.AspNet.WebUtilities
 
             _innerStream = stream;
             _innerOffset = _innerStream.CanSeek ? _innerStream.Position : 0;
+            _observedLength = _innerStream.CanSeek ? _innerStream.Length : 0;
             if (expectLeadingCrlf)
             {
                 _boundaryBytes = Encoding.UTF8.GetBytes("\r\n--" + boundary);
@@ -157,7 +160,7 @@ namespace Microsoft.AspNet.WebUtilities
             }
             return read;
         }
-#if NET451
+#if NET451 || NET461
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int size, AsyncCallback callback, object state)
         {
             var tcs = new TaskCompletionSource<int>(state);

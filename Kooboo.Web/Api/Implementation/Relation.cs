@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Sites.Extensions;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,7 +65,7 @@ namespace Kooboo.Web.Api.Implementation
 
             string baseurl = call.WebSite.BaseUrl();
      
-            byte consttype = ConstObjectType.GetByte(by);
+            byte consttype = ConstTypeContainer.GetConstType(by);
     
             List<UsedByRelation> result = new List<UsedByRelation>();
 
@@ -80,7 +82,7 @@ namespace Kooboo.Web.Api.Implementation
         {  
             string baseurl = sitedb.WebSite.BaseUrl();
               
-            byte consttype = ConstObjectType.GetByte(by);
+            byte consttype = ConstTypeContainer.GetConstType(by);
 
             List<UsedByRelation> result = new List<UsedByRelation>();
 

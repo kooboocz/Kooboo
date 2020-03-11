@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System.Collections.Generic;
 using Kooboo.Api;
 using Kooboo.Sites.Models;
 using Kooboo.Web.ViewModel;
@@ -21,7 +23,7 @@ namespace Kooboo.Web.Api.Implementation
                 ExternalResourceItemViewModel model = new ExternalResourceItemViewModel();
                 model.Id = item.Id;
                 model.FullUrl = item.FullUrl;
-                model.ResourceType = ConstObjectType.GetName(item.DestinationObjectType);
+                model.ResourceType = ConstTypeContainer.GetName(item.DestinationObjectType);
                 model.LastModified = item.LastModified;
 
                model.Relations =  Sites.Helper.RelationHelper.Sum(sitedb.ExternalResource.GetUsedBy(item.Id));

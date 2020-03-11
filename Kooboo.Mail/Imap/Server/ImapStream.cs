@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Net;
@@ -83,7 +85,7 @@ namespace Kooboo.Mail.Imap
 
         public virtual async Task WriteLineAsync(string line)
         {
-            await _writer.WriteLineAsync(line);
+            await _writer.WriteAsync(line + "\r\n");
 
             LogWrite(line);
         }
@@ -95,22 +97,26 @@ namespace Kooboo.Mail.Imap
             _writer.Dispose();
         }
 
-        //private static Logging.SimpleDateRollingLogWriter _logWriter;
-        //static ImapStream()
-        //{
-        //    _logWriter = new Logging.SimpleDateRollingLogWriter(o =>
-        //        System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "imap", "log-" + o.ToString("yyyyMMdd") + ".txt")
-        //    );
-        //}
+        private static Logging.ILogger _logger;
+        static ImapStream()
+        {
+            _logger = Logging.LogProvider.GetLogger("imap", "imap");
+        }
 
         private void LogRead(string line)
         {
-            //_logWriter.Write("C: " + line);
+            if (String.IsNullOrEmpty(line))
+                return;
+
+            _logger.LogDebug($"{_remote.Address} C: " + line);
         }
 
         private void LogWrite(string line)
         {
-            //_logWriter.Write("S: " + line);
+            if (line == "* BAD Empty command line")
+                return;
+
+            _logger.LogDebug($"{_remote.Address} S: " + line);
         }
     }
 

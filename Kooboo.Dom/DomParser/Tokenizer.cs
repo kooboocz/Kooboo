@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -318,7 +320,7 @@ namespace Kooboo.Dom
         /// <param name="additionalAllowedChar"></param>
         /// <param name="caller"></param>
         /// <returns></returns>
-        private HtmlToken characterReferenceInAttributeValue(HtmlToken parenttoken, char? additionalAllowedChar, string caller)
+        private void characterReferenceInAttributeValue(HtmlToken parenttoken, char? additionalAllowedChar)
         {
             //Attempt to consume a character reference.
             HtmlToken chartoken = consumeCharacterReference(true, additionalAllowedChar);
@@ -339,22 +341,22 @@ namespace Kooboo.Dom
 
             ///Finally, switch back to the attribute value state that switched into this state.
 
-            if (caller == "attdouble")
-            {
-                return attributeValueDoubleQuoted(parenttoken);
-            }
-            else if (caller == "unquoted")
-            {
-                return attributeValueUnquoted(parenttoken);
-            }
-            else if (caller == "attsingle")
-            {
-                return attributeValueSingleQuoted(parenttoken);
-            }
-            else
-            {
-                return attributeValueUnquoted(parenttoken);
-            }
+            //if (caller == "attdouble")
+            //{
+            //    return attributeValueDoubleQuoted(parenttoken);
+            //}
+            //else if (caller == "unquoted")
+            //{
+            //    return attributeValueUnquoted(parenttoken);
+            //}
+            //else if (caller == "attsingle")
+            //{
+            //    return attributeValueSingleQuoted(parenttoken);
+            //}
+            //else
+            //{
+            //    return attributeValueUnquoted(parenttoken);
+            //}
 
         }
 
@@ -1302,7 +1304,7 @@ namespace Kooboo.Dom
                 //Switch to the character reference in attribute value state, with the additional allowed character being U+0022 QUOTATION MARK (").
                 else if (current == '\u0026')
                 {
-                    return characterReferenceInAttributeValue(token, '\u0022', "attdouble");
+                     characterReferenceInAttributeValue(token, '\u0022');
                 }
                 //U+0000 NULL
                 //Parse error. Append a U+FFFD REPLACEMENT CHARACTER character to the current attribute's value.
@@ -1357,7 +1359,7 @@ namespace Kooboo.Dom
                 //Switch to the character reference in attribute value state, with the additional allowed character being ">" (U+003E).
                 else if (current == '\u0026')
                 {
-                    return characterReferenceInAttributeValue(token, '\u003E', "unquoted");
+                      characterReferenceInAttributeValue(token, '\u003E');
                 }
 
                 //">" (U+003E)
@@ -1433,7 +1435,7 @@ namespace Kooboo.Dom
                 //Switch to the character reference in attribute value state, with the additional allowed character being "'" (U+0027).
                 else if (current == '\u0026')
                 {
-                    return characterReferenceInAttributeValue(token, '\u0027', "attsingle");
+                      characterReferenceInAttributeValue(token, '\u0027');
                 }
                 //U+0000 NULL
                 //Parse error. Append a U+FFFD REPLACEMENT CHARACTER character to the current attribute's value.

@@ -1,4 +1,6 @@
-﻿using Kooboo.Dom;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Dom;
  using Kooboo.Lib.Helper;
  
 
@@ -62,7 +64,7 @@ namespace Kooboo.Sites.SiteTransfer
                         {
                             AbsoluteUrl = absoluteUrl,
                             RelativeUrl = relativeurl,
-                            ConstType = ConstObjectType.File,
+                            ConstType = ConstObjectType.CmsFile,
                             OwnerObjectId = Context.ObjectId
                         });
                     } 

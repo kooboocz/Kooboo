@@ -3,17 +3,42 @@
   <Name>database</Name>
   <Description>The kScript database engine</Description>
   <Example>
-    var db = k.database;
+    
+    var obj = {name: "my value"};
+    k.database.mytablename.add(obj);
+
+    // -- or in the very very old version ---
+    var table = k.database.getTable("mytablename");
+    var obj = {name: "my value"};
+    table.add(obj);
+ 
   </Example>
   <Props />
+
+  <Props>
+    <Property>
+      <Name>.{tablename}</Name>
+      
+      <Description>Dynamic kScript database table object, if the table is not exists, it will be created.</Description>
+      <Type>Table</Type>
+    </Property>
+  </Props>
+  
   <Methods>
+  
     <Method>
       <Name>getTable</Name>
       <Description>Return the kScript database table object, if the table is not exists, it will be created. </Description>
-      <Example> 
+      <Example>
+
+        var obj = {name: "my value"};
+        k.database.mytablename.add(obj);
+         
+        // -- or in the very very old version ---
         var table = k.database.getTable("mytablename");
-        var obj = {name: "my value"}; 
-        table.add(obj);  
+        var obj = {name: "my value"};
+        table.add(obj);
+
       </Example>
       <Params>
         <Param>
@@ -24,5 +49,8 @@
       </Params>
       <ReturnType>Table</ReturnType>
     </Method>
+
+
   </Methods>
+  
 </KScriptSetting>

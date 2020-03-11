@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,10 +21,7 @@ namespace Kooboo.Sites.Scripting.Helper.ScriptHelper
         public static Tree GetTree()
         {
             Settings = ReadSettings();
-            if (Settings == null)
-            {
-                Settings = ReadSettings();
-            }
+         
             var tree = new Tree();
             tree.Nodes = new List<Node>();
 
@@ -98,6 +97,11 @@ namespace Kooboo.Sites.Scripting.Helper.ScriptHelper
 
         private static Dictionary<string,SettingBase> ReadSettings()
         {
+            //XmlSerializer serializer = new XmlSerializer(typeof(KScriptSetting));
+
+            XmlSerializer serializer =
+XmlSerializer.FromTypes(new[] { typeof(KScriptSetting) })[0];
+
             var path = GetPath();
             var settings = new Dictionary<string,SettingBase>();
             var files = Directory.GetFiles(path);
@@ -106,13 +110,15 @@ namespace Kooboo.Sites.Scripting.Helper.ScriptHelper
                 var file = files[i];
                 var reader = new StreamReader(file);
                 try
-                {
-                    var serializer = new XmlSerializer(typeof(KScriptSetting));
-
-                    var setting = serializer.Deserialize(reader) as KScriptSetting;
+                {  
+                    KScriptSetting setting = serializer.Deserialize(reader) as KScriptSetting;
 
                     var fileName = Path.GetFileNameWithoutExtension(file).ToLower();
                     settings.Add(fileName, setting);
+                }
+                catch(Exception ex)
+                {
+
                 }
                 finally
                 {
@@ -125,11 +131,8 @@ namespace Kooboo.Sites.Scripting.Helper.ScriptHelper
         }
         public static string GetPath()
         {
-#if DEBUG
-            var path = Path.GetFullPath(@"..\..\..\Kooboo.Web\_Admin\help\kScript");
-#else
-            var path= Path.GetFullPath(@".\_Admin\help\kScript");
-#endif
+            var path = Kooboo.Lib.Compatible.CompatibleManager.Instance.System.CombinePath(Kooboo.Data.AppSettings.RootPath, @"_Admin\help\kScript");
+
             return path;
         }
     }

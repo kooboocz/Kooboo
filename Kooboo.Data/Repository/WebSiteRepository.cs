@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,29 +29,29 @@ namespace Kooboo.Data.Repository
 
         private object _locker = new object(); 
          
-        private  Dictionary<Guid, WebSite> _cachewebsites;
+        public  Dictionary<Guid, WebSite> Cachedsites;
 
         //cache of all local websites... 
         public  Dictionary<Guid, WebSite> AllSites
         {
             get
             {
-                if (_cachewebsites == null)
+                if (Cachedsites == null)
                 {
                     lock (_locker)
                     {
-                        if (_cachewebsites == null)
+                        if (Cachedsites == null)
                         {
-                            _cachewebsites = new Dictionary<Guid, WebSite>();
+                            Cachedsites = new Dictionary<Guid, WebSite>();
                             var sites = Data.GlobalDb.WebSites.All();
                             foreach (WebSite item in sites)
                             {
-                                _cachewebsites[item.Id] = item;
+                                Cachedsites[item.Id] = item;
                             }
                         }
                     }
                 }
-                return _cachewebsites; 
+                return Cachedsites; 
             } 
         } 
          
@@ -104,13 +106,18 @@ namespace Kooboo.Data.Repository
         public override bool AddOrUpdate(WebSite value)
         {
             // check quota control.
-            var maxsites = Kooboo.Data.Authorization.QuotaControl.MaxSites(value.OrganizationId); 
+            var maxsites = Kooboo.Data.Infrastructure.InfraManager.instance.MaxSites(value.OrganizationId); 
             if (maxsites != int.MaxValue)
             {
                 var counts = this.ListByOrg(value.OrganizationId).Count(); 
                 if (counts >= maxsites)
                 {
-                    throw new Exception(Kooboo.Data.Language.Hardcoded.GetValue("Max number of sites has been reached, require service level upgrade")); 
+                    var found = this.Get(value.Id);
+
+                    if (found == null)
+                    {
+                        throw new Exception(Kooboo.Data.Language.Hardcoded.GetValue("Max number of sites has been reached, require service level upgrade"));
+                    }  
                 }
             }
 

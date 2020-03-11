@@ -1,4 +1,6 @@
-﻿using Kooboo.Sites.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Models;
 using Kooboo.Lib.Helper;
 
 namespace Kooboo.Sites.Repository
@@ -24,7 +26,7 @@ namespace Kooboo.Sites.Repository
              
             if (!found)
             {
-                SiteDb.Routes.AddOrUpdate(relativeUrl, ConstObjectType.File, file.Id, UserId);
+                SiteDb.Routes.AddOrUpdate(relativeUrl, ConstObjectType.CmsFile, file.Id, UserId);
             }
 
             this.AddOrUpdate(file, UserId); 

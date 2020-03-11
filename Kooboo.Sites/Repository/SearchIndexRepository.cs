@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Interface;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Interface;
 using Kooboo.Sites.Contents.Models;
 using System.Collections.Generic;
 using System;
@@ -342,7 +344,7 @@ namespace Kooboo.Sites.Repository
                         var contentview = Sites.Helper.ContentHelper.ToView(content, culture, SiteDb.ContentTypes.GetColumns(content.ContentTypeId));
                         item.Title = this.HighLight(Helper.ContentHelper.GetTitle(this.SiteDb, contentview), words, HightLightTag);
 
-                        var fulltext = string.Join(" ", contentview.Values.Values);
+                        var fulltext = string.Join(" ", contentview.TextValues.Values);
 
                         item.Summary = this.GetSummary(fulltext, words, HightLightTag, 250);
 
@@ -556,7 +558,7 @@ namespace Kooboo.Sites.Repository
                                 var contentview = Sites.Helper.ContentHelper.ToView(content, context.Culture, null);
                                 searchresult.Title = this.HighLight(Helper.ContentHelper.GetTitle(this.SiteDb, contentview), words, HighLightAttr);
 
-                                var fulltext = string.Join(" ", contentview.Values.Values);
+                                var fulltext = string.Join(" ", contentview.TextValues.Values);
 
                                 searchresult.Summary = this.GetSummary(fulltext, words, HighLightAttr, 250);
 
@@ -588,7 +590,7 @@ namespace Kooboo.Sites.Repository
 
         private string GetLangTexContentBody(TextContentViewModel model)
         {
-            return string.Join(" ", model.Values);
+            return string.Join(" ", model.TextValues);
         }
 
         public void Sync(SiteDb SiteDb, ISiteObject Value, ChangeType ChangeType, string StoreName)

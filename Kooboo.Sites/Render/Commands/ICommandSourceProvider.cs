@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +20,6 @@ namespace Kooboo.Sites.Render.Commands
         string GetLayout(RenderContext context, string RelativeUrl);
 
         System.IO.Stream GetStream(RenderContext context, string RelativeUrl);
-
+        
     }
 }

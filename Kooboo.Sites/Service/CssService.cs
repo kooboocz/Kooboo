@@ -1,4 +1,6 @@
-﻿using Kooboo.Dom;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Dom;
 using Kooboo.Dom.CSS;
 using Kooboo.Dom.CSS.Tokens;
 using System;
@@ -164,7 +166,7 @@ namespace Kooboo.Sites.Service
 
             foreach (var item in input)
             {
-                if (!item.RawUrl.StartsWith("#"))
+                if (!item.RawUrl.StartsWith("#") && !item.RawUrl.Contains("/#"))
                 {
                     result.Add(item); 
                 }

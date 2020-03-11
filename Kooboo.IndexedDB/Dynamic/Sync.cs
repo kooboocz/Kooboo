@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,14 +9,14 @@ using System.Threading.Tasks;
 namespace Kooboo.IndexedDB.Dynamic
 {
     public class Sync
-    {
-
+    { 
         public static TableSetting GetTableSetting(Database db)
         {
             var list = db.GetTables();
 
             list.RemoveAll(o => o.StartsWith("_sys_"));
-
+            list.RemoveAll(o => o.StartsWith("_koobootemp_")); 
+  
             TableSetting setting = new TableSetting();
 
             foreach (var item in list)

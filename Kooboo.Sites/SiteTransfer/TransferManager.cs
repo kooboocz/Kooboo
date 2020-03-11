@@ -1,4 +1,6 @@
-﻿using Kooboo.Extensions;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Extensions;
 using Kooboo.Lib.Helper;
 using Kooboo.Sites.Models;
 using Kooboo.Sites.Repository;
@@ -106,21 +108,29 @@ namespace Kooboo.Sites.SiteTransfer
         {
             if (!siteDb.WebSite.ContinueDownload)
             { return null;  }
-             
-            var history = siteDb.TransferTasks.History().ToList();  
+
+            var history = siteDb.TransferTasks.History().ToList();
             if (history.Count() == 0)
             {
                 return null;
-            } 
+            }
+
+
             /// track failed history...
             Guid downloadid = RelativeUrl.ToHashGuid();
+
             DownloadFailTrack failtrack = siteDb.DownloadFailedLog.Get(downloadid);
 
             if (failtrack != null)
             {
                 if (failtrack.HistoryTime.Where(o => o > DateTime.Now.AddMinutes(-30)).Any())
-                { 
+                {
                     return null;
+                }
+
+                if (failtrack.HistoryTime.Count()>3)
+                {
+                    return null; 
                 }
             }
             else
@@ -128,6 +138,14 @@ namespace Kooboo.Sites.SiteTransfer
                 failtrack = new DownloadFailTrack();
                 failtrack.Id = downloadid;
             }
+             
+            var oktoDownload = await siteDb.TransferTasks.CanStartDownload(RelativeUrl); 
+
+            if (!oktoDownload)
+            {
+                return null; 
+            }
+              
              
             string fullurl = string.Empty;
             DownloadContent download = null; 
@@ -160,59 +178,53 @@ namespace Kooboo.Sites.SiteTransfer
                     }
                 }
             }
-   
+    
             ///// 301, 302, will be converted to 200 and return back as well. So it is safe to == 200.
             if (download != null && download.StatusCode == 200)
             {
                 DownloadManager downloadManager = new DownloadManager() {  SiteDb = siteDb }; 
                 SiteObject downloadobject = TransferHelper.AddDownload(downloadManager, download, fullurl, false, true, fullurl);
 
-                /// for continue download content... 
+                if (downloadobject is Page || downloadobject is View)
+                {
+                    siteDb.TransferPages.AddOrUpdate(new TransferPage() { absoluteUrl = fullurl, PageId = downloadobject.Id }); 
+                }
+
+                siteDb.TransferTasks.ReleaseDownload(RelativeUrl); 
+                ///for continue download content... 
                 Continue.ContinueTask.Convert(siteDb, downloadobject); 
                 return downloadobject;
+            }
+            else
+            {
+                siteDb.TransferTasks.ReleaseDownload(RelativeUrl); 
             }
 
             //download failed. 
             failtrack.HistoryTime.Add(DateTime.Now);
             siteDb.DownloadFailedLog.AddOrUpdate(failtrack);
-
-            if (failtrack.HistoryTime.Count() > 5)
-            {
-                var filetype = Kooboo.Lib.Helper.UrlHelper.GetFileType(RelativeUrl);
-
-                byte consttype;
-
-                switch (filetype)
-                {
-                    case UrlHelper.UrlFileType.Image:
-                        consttype = ConstObjectType.Image;
-                        break;
-                    case UrlHelper.UrlFileType.JavaScript:
-                        consttype = ConstObjectType.Script;
-                        break;
-                    case UrlHelper.UrlFileType.Style:
-                        consttype = ConstObjectType.Style;
-                        break;
-                    case UrlHelper.UrlFileType.File:
-                        consttype = ConstObjectType.File;
-                        break;
-                    case UrlHelper.UrlFileType.PageOrView:
-                        consttype = ConstObjectType.Page;
-                        break;
-                    default:
-                        consttype = 0;
-                        break;
-                }
-
-               // siteDb.Routes.EnsureExists(RelativeUrl, consttype, default(Guid));
-            }
-
+             
             return null;
         }
-
-
+         
         public static bool IsUrlBanned(string FullUrl)
         {
+            var domainresult = Data.Helper.DomainHelper.Parse(FullUrl);  
+
+            if (domainresult !=null && !string.IsNullOrWhiteSpace(domainresult.SubDomain))
+            {
+                if (domainresult.SubDomain.Contains("."))
+                {
+                    return false; 
+                }
+
+                string sub = domainresult.SubDomain.ToLower(); 
+                if (sub !="www" && sub.Length > 3)
+                {
+                    return false; 
+                }
+            }
+
             var rootdomain = Kooboo.Data.Helper.DomainHelper.GetRootDomain(FullUrl);
 
             var base64string = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(rootdomain));
@@ -223,6 +235,6 @@ namespace Kooboo.Sites.SiteTransfer
 
             return Lib.Helper.HttpHelper.Get<bool>(url);
         }
-
+         
     }
 }

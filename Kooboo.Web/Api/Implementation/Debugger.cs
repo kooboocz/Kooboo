@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.ScriptDebugger;
 using System;
@@ -171,7 +173,7 @@ namespace Kooboo.Web.Api.Implementation
             }
             else
             {
-                var value = Lib.Helper.JintHelper.GetValue(session.JsEngine, FullName);
+                var value = Lib.Helper.JintHelper.GetGebuggerValue(session.JsEngine, FullName);
 
                 if (value == null)
                 {
@@ -203,7 +205,7 @@ namespace Kooboo.Web.Api.Implementation
                     object value;
                     try
                     {
-                        value = Lib.Helper.JintHelper.GetValue(session.JsEngine, JsStatement);
+                        value = Lib.Helper.JintHelper.GetGebuggerValue(session.JsEngine, JsStatement);
                         result.Success = true;
                         if (value == null)
                         {

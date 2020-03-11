@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using Kooboo.Data.Interface;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -118,7 +120,8 @@ namespace Kooboo.Sites.Models
         Job = 3,
         Api =4, 
         PageScript =5, 
-        Diagnosis =6
+        Diagnosis =6, 
+        PaymentCallBack = 7,
     } 
 
 }

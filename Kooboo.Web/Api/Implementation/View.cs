@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Data.Definition;
 using Kooboo.Data.Models;
 using Kooboo.Sites.Extensions;
@@ -152,12 +154,9 @@ namespace Kooboo.Web.Api.Implementation
 
             return view.Id;
         }
-
-        //public Dictionary<DataTypes, ComparerModel[]> CompareType(ApiCall call)
-        // {
-        //     return Data.Helper.DataTypeHelper.GetDataTypeCompareModel();
-        // }
-
+                     
+        
+        
         public Dictionary<string, ComparerModel[]> CompareType(ApiCall call)
         {
             var types = Data.Helper.DataTypeHelper.GetDataTypeCompareModel();

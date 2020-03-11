@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB.ByteConverter;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB.ByteConverter;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -22,7 +24,7 @@ namespace Kooboo.IndexedDB.Schedule
         /// <summary>
         /// The list of repeat task that is saved at memory. 
         /// </summary>
-        private List<RepeatItem<TValue>> RepeatTaskList;
+        private List<RepeatItem<TValue>> RepeatTaskList { get; set; }
 
         private byte startbyteone = 10;
         private byte startbytetwo = 13;
@@ -271,7 +273,7 @@ namespace Kooboo.IndexedDB.Schedule
 
             foreach (var item in RepeatTaskList)
             {
-                items.Add(DeepCopy<RepeatItem<TValue>>(item));
+                items.Add(Helper.TypeHelper.DeepCopy<RepeatItem<TValue>>(item));
             }
             return items;
         }
@@ -282,7 +284,7 @@ namespace Kooboo.IndexedDB.Schedule
             {
                 if (item.id == id)
                 {
-                    return DeepCopy<RepeatItem<TValue>>(item); 
+                    return Helper.TypeHelper.DeepCopy<RepeatItem<TValue>>(item); 
                 }
             }
 
@@ -291,7 +293,7 @@ namespace Kooboo.IndexedDB.Schedule
             if (record != null)
             {
                 this.RepeatTaskList.Add(record);
-                return DeepCopy<RepeatItem<TValue>>(record); 
+                return Helper.TypeHelper.DeepCopy<RepeatItem<TValue>>(record); 
             }
 
             return null; 
@@ -308,7 +310,7 @@ namespace Kooboo.IndexedDB.Schedule
             {
                 if (item.NextExecute <= DateTime.Now)
                 {
-                    RepeatItem<TValue> one = DeepCopy<RepeatItem<TValue>>(item);
+                    RepeatItem<TValue> one = Helper.TypeHelper.DeepCopy<RepeatItem<TValue>>(item);
                     items.Add(one);
                 }
             }
@@ -332,7 +334,7 @@ namespace Kooboo.IndexedDB.Schedule
             {
                 if (item.NextExecute <= DateTime.Now)
                 {
-                    RepeatItem<TValue> one = DeepCopy<RepeatItem<TValue>>(item);                    
+                    RepeatItem<TValue> one = Helper.TypeHelper.DeepCopy<RepeatItem<TValue>>(item);                    
                     UpdateExecuteTime(one);
                     return one;
                 }
@@ -684,19 +686,7 @@ namespace Kooboo.IndexedDB.Schedule
 
         }
 
-        public static T DeepCopy<T>(T input)
-        {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                BinaryFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(ms, input);
-                ms.Position = 0;
-                return (T)formatter.Deserialize(ms);
-            }
-        }
-
-
-        public void DelSelf()
+       public void DelSelf()
         {
             lock (_object)
             {
@@ -707,5 +697,20 @@ namespace Kooboo.IndexedDB.Schedule
             }
         }
 
+
+        public void Close()
+        {
+           if (_ContentStream !=null)
+            {
+                _ContentStream.Close();
+                _ContentStream = null; 
+            }
+
+           if (_RecordStream !=null)
+            {
+                _RecordStream.Close();
+                _RecordStream = null; 
+            }
+        }
     }
 }

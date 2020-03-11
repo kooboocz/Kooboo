@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System.Collections.Generic;
 using Kooboo.Extensions;
 using Kooboo.Sites.Models;
 using Kooboo.Data.Interface;
 using Kooboo.Data.Context;
 using System;
+using Kooboo.Data.Attributes;
 
 namespace Kooboo.Sites.Contents.Models
 {
@@ -11,7 +14,7 @@ namespace Kooboo.Sites.Contents.Models
     {         
 
         private Dictionary<string, object> _values;
-
+         
         public Dictionary<string, object> Values
         {
             get
@@ -28,6 +31,7 @@ namespace Kooboo.Sites.Contents.Models
             }
         }
 
+        [KIgnore]
         public Object  GetValue(string fieldName)
         {  
             if (Values.ContainsKey(fieldName))
@@ -52,16 +56,19 @@ namespace Kooboo.Sites.Contents.Models
             return string.Empty;
         }
 
+        [KIgnore]
         public virtual void SetValue(string culture, string value)
         {
             this.Values[culture] = value;
         }
 
+        [KIgnore]
         public virtual void SetValue(string field, object value)
         {
             this.Values[field] = value;
         }
 
+        [KIgnore]
         public override int GetHashCode()
         {
             string unique = Name;
@@ -72,6 +79,7 @@ namespace Kooboo.Sites.Contents.Models
             return Lib.Security.Hash.ComputeIntCaseSensitive(unique);
         }
 
+        [KIgnore]
         public Object GetValue(string FieldName, RenderContext Context)
         {
             return GetValue(FieldName); 

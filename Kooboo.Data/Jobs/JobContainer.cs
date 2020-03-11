@@ -1,4 +1,6 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data;
 using Kooboo.Data.Interface;
 using Kooboo.Lib.Reflection;
 using System;
@@ -49,14 +51,12 @@ namespace Kooboo.Jobs
         public static List<IJob> JobList
         {
             get; set;
-        }
-
+        } 
 
         public static List<IBackgroundWorker> BackgroundWorkers
         {
             get; set;
         }
     }
-
-
+     
 }

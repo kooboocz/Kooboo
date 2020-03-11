@@ -1,4 +1,6 @@
-﻿using Kooboo.Sites.Contents.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Contents.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +17,7 @@ namespace Kooboo.Sites.Ecommerce.Models
             this.ConstType = ConstObjectType.Cateogry;
         }
         public Guid ParentId { get; set; }
-
-
+         
         private Guid _id;
         [Kooboo.Attributes.SummaryIgnore]
         public override Guid Id
@@ -51,6 +52,8 @@ namespace Kooboo.Sites.Ecommerce.Models
                 _id = value;
             }
         }
+
+        public string UserKey { get; set; }
 
         public override int GetHashCode()
         {

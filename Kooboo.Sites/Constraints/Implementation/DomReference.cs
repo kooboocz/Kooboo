@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using Kooboo.Dom;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Models;
@@ -62,19 +64,17 @@ namespace Kooboo.Sites.Constraints
                     CheckAndAddChange(updates, item, itemsrc, ObjectRelativeUrl);
                 }
             }
+             
+            var imgurls = Kooboo.Sites.Service.DomUrlService.GetImageSrcs(dom);
 
-            foreach (var item in dom.images.item)
+            foreach (var item in imgurls)
             {
-                string itemsrc = DomUrlService.GetLinkOrSrc(item);
-
-                if (!string.IsNullOrEmpty(itemsrc) && !Kooboo.Lib.Utilities.DataUriService.isDataUri(itemsrc))
-                {
-
-                    CheckAndAddChange(updates, item, itemsrc, ObjectRelativeUrl);
-
+                if (!string.IsNullOrEmpty(item.Value) && !Kooboo.Lib.Utilities.DataUriService.isDataUri(item.Value))
+                { 
+                    CheckAndAddChange(updates, item.Key, item.Value, ObjectRelativeUrl);
                 }
             }
-
+              
             HTMLCollection scripts = dom.getElementsByTagName("script");
 
             foreach (var item in scripts.item)
@@ -134,6 +134,11 @@ namespace Kooboo.Sites.Constraints
             }
 
             string RelativeUrl = Kooboo.Lib.Helper.UrlHelper.Combine(ObjectRelativeUrl, itemsrc);
+
+            if (RelativeUrl !=null)
+            {
+                RelativeUrl = System.Net.WebUtility.UrlDecode(RelativeUrl); 
+            }
 
             if (itemsrc != RelativeUrl)
             {

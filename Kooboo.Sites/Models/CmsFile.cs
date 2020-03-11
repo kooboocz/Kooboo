@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Interface;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Interface;
 using Kooboo.Extensions;
 using System;
 using System.Security.Cryptography;
@@ -11,7 +13,7 @@ namespace Kooboo.Sites.Models
     {
         public CmsFile()
         {
-            this.ConstType = ConstObjectType.File;
+            this.ConstType = ConstObjectType.CmsFile;
         }
 
         private Guid _id;
@@ -36,6 +38,18 @@ namespace Kooboo.Sites.Models
         /// </summary>
         [Kooboo.Attributes.SummaryIgnore]
         public byte[] ContentBytes { get; set; }
+
+        public byte[] Bytes
+        {
+            get
+            {
+                return ContentBytes;
+            }
+            set
+            {
+                ContentBytes = value;
+            }
+        }
 
         /// <summary>
         ///  this is for some file like text file, etc... 

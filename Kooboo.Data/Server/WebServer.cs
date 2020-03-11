@@ -1,20 +1,20 @@
-﻿using Kooboo.HttpServer;
-using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+  
+#if !NETSTANDARD2_0
+ 
+using Kooboo.HttpServer; 
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kooboo.Data.Server
-{
-  
-    public class WebServer 
+{   
+    public class WebServer : IWebServer
     {
         private int port = 80;
         private List<IKoobooMiddleWare> MiddleWares = new List<IKoobooMiddleWare>();
         private IKoobooMiddleWare StartWare = null;
          
-        public WebServer(int Port, ISslCertificateProvider SslCertProvider)
+        public WebServer(int Port)
         {
             this.port = Port;
 
@@ -23,18 +23,18 @@ namespace Kooboo.Data.Server
             if (Port == 443)
             {
                 https = true;
-            }  
+            }
             var options = new HttpServerOptions()
             {
                 HttpHandler = new ServerHandler(r => this.StartWare.Invoke(r)),
-                SslCertificateProvider = SslCertProvider, 
+                SelectCertificate = Kooboo.Data.Server.SslCertificateProvider.SelectCertificate,  
                 IsHttps = https
             };
 
             this.Server = new Kooboo.HttpServer.HttpServer(new System.Net.IPEndPoint(System.Net.IPAddress.Any, this.port), options);
         }
 
-        public WebServer(int Port, ISslCertificateProvider SslCertProvider, bool IsHttps)
+        public WebServer(int Port, bool IsHttps)
         {
             this.port = Port;
 
@@ -43,7 +43,7 @@ namespace Kooboo.Data.Server
             var options = new HttpServerOptions()
             {
                 HttpHandler = new ServerHandler(r => this.StartWare.Invoke(r)),
-                SslCertificateProvider = SslCertProvider,
+                SelectCertificate = Kooboo.Data.Server.SslCertificateProvider.SelectCertificate, 
                 IsHttps = https
             };
 
@@ -81,8 +81,7 @@ namespace Kooboo.Data.Server
             }
             this.StartWare = this.MiddleWares[0];
         }
-          
- 
+           
         public Kooboo.HttpServer.HttpServer Server { get; set; }
          
         /// <summary>
@@ -96,9 +95,13 @@ namespace Kooboo.Data.Server
         public void Stop()
         { 
            
+           
             // TODO:  I also need a stop option... 
         }
         
+         
     }
-
+      
 }
+
+#endif

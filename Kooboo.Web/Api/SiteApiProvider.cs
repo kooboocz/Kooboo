@@ -1,9 +1,12 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using Kooboo.Sites.Models;
 using Kooboo.Sites.Contents.Models;
 using Kooboo.Lib.Reflection;
 using Kooboo.Api;
+using Kooboo.Data.Context;
 
 namespace Kooboo.Web.Api
 {
@@ -12,6 +15,7 @@ namespace Kooboo.Web.Api
         public SiteApiProvider()
         {
             List = DefaultList();
+            CheckAccess = Kooboo.Web.Backend.ApiPermission.IsAllow; 
         }
 
         private Dictionary<string, IApi> DefaultList()
@@ -43,6 +47,23 @@ namespace Kooboo.Web.Api
         }
 
         public string ApiPrefix { get; set; } = "/_api";
+        public Func<ApiCall, ApiMethod> GetMethod {
+            get
+            {
+                return getmethod; 
+            }
+            set
+            {
+
+            }
+        }
+
+        public Func<RenderContext, ApiMethod, bool> CheckAccess { get; set; }
+
+        public ApiMethod  getmethod(ApiCall call)
+        {
+            return Kooboo.Module.ModuleApiHelper.GetApiMethod(call);  
+        }
 
         internal void AddApi(Dictionary<string, IApi> currentlist, IApi instance)
         {

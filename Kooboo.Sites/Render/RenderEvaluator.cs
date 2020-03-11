@@ -1,8 +1,10 @@
-﻿using Kooboo.Dom;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Dom;
 using Kooboo.Sites.Render.RenderTask;
 using System.Collections.Generic;
 using System.Linq;
-using System; 
+using System;
 
 namespace Kooboo.Sites.Render
 {
@@ -90,12 +92,23 @@ namespace Kooboo.Sites.Render
 
             List<EvaluatorResponse> responseList = new List<EvaluatorResponse>();
 
+            List<IEvaluator> Evaluator;
+            if (options.Evaluators != null)
+            {
+                Evaluator = options.Evaluators;
+            }
+            else
+            {
+                Evaluator = EvaluatorContainer.DefaultList;
+            }
+
             while (nextnode != null)
             {
+                options.HasContentTask = false;
                 if (ShouldTryRender(nextnode))
                 {
 
-                    foreach (var item in EvaluatorContainer.List)
+                    foreach (var item in Evaluator)
                     {
                         var response = item.Evaluate(nextnode, options);
                         if (response != null)
@@ -107,6 +120,7 @@ namespace Kooboo.Sites.Render
                             }
                         }
                     }
+
                     int len = nextnode.location.openTokenStartIndex - currentindex;
                     //document parse error,may cause nextnode openTokenStartIndex less than currentindex.
                     //then get repeated content
@@ -139,7 +153,7 @@ namespace Kooboo.Sites.Render
                             }
                             else
                             {
-                                if (contenttask !=null)
+                                if (contenttask != null)
                                 {
                                     tasklist.AddRange(contenttask);
                                 }
@@ -172,12 +186,6 @@ namespace Kooboo.Sites.Render
                             }
                         }
 
-                        var endbinding = GetEndBinding(responseList);
-                        if (endbinding != null)
-                        {
-                            tasklist.AddRange(endbinding);
-                        }
-
                         var append = GetAppend(responseList);
                         if (append != null)
                         {
@@ -205,6 +213,12 @@ namespace Kooboo.Sites.Render
                             nextnode = iterator.nextNode();
                         }
 
+                        var endbinding = GetEndBinding(responseList);
+                        if (endbinding != null)
+                        {
+                            tasklist.AddRange(endbinding);
+                        }
+
                         responseList.Clear();
                     }
                     else
@@ -216,7 +230,7 @@ namespace Kooboo.Sites.Render
                 {
                     nextnode = iterator.nextNode();
                 }
-                
+
             }
 
             if (currentindex < totallen - 1)
@@ -232,7 +246,7 @@ namespace Kooboo.Sites.Render
 
             return tasklist;
         }
-                     
+
 
         private static bool IsFakeHeader(Element element)
         {
@@ -353,8 +367,8 @@ namespace Kooboo.Sites.Render
                             return false;
                         }
                     }
-                } 
-                return true; 
+                }
+                return true;
             }
             return false;
 

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kooboo.Sites.Repository;
@@ -65,7 +67,7 @@ namespace Kooboo.Sites.Cache
             Guid id;
             if (!System.Guid.TryParse(NameOrId, out id))
             {
-                var consttype = Service.ConstTypeService.GetConstType(typeof(TValue));
+                var consttype = ConstTypeContainer.GetConstType(typeof(TValue));
                 id = Kooboo.Data.IDGenerator.Generate(NameOrId, consttype);
             }
             return Get(SiteDb, id);

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -47,8 +49,7 @@ namespace Kooboo.Lib.Helper
 
             System.Buffer.BlockCopy(idbytes, 8, lastid, 8, 8);
 
-            return new Guid(lastid);
-
+            return new Guid(lastid); 
         }
          
         public static DateTime ExtractTimeFromGuid(Guid id)
@@ -136,6 +137,11 @@ namespace Kooboo.Lib.Helper
                 return (Guid)key;
             }
             string strkey = key.ToString();
+            return GetOrParseKey(strkey);
+        }
+
+        public static Guid GetOrParseKey(string strkey)
+        {
             Guid guidkey;
             if (System.Guid.TryParse(strkey, out guidkey))
             {
@@ -143,10 +149,8 @@ namespace Kooboo.Lib.Helper
             }
             else
             {
-                return Lib.Security.Hash.ComputeHashGuid(strkey);
+                return Lib.Security.Hash.ComputeGuidIgnoreCase(strkey);
             }
         }
-
-
     }
 }

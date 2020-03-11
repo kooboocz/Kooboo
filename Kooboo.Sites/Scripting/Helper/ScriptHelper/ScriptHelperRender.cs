@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,12 +28,16 @@ namespace Kooboo.Sites.Scripting.Helper.ScriptHelper
             return !string.IsNullOrEmpty(name);
         }
 
-        public override string RenderDetail(RenderContext context)
+        public override string RenderDetail(RenderContext context,Node node)
         {
             var name = context.Request.QueryString["name"];
+            if(string.IsNullOrEmpty(name) && node != null)
+            {
+                name = node.Text;
+            }
             var param = context.Request.QueryString["param"];
             var methodName= context.Request.QueryString["method"];
-            if (!ScriptHelperReader.Settings.ContainsKey(name.ToLower()))
+            if (name==null||!ScriptHelperReader.Settings.ContainsKey(name.ToLower()))
                 return string.Empty;
 
             var setting = ScriptHelperReader.Settings[name.ToLower()] as KScriptSetting;

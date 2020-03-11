@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kooboo.Data;
@@ -194,7 +196,7 @@ namespace Kooboo.Sites.DataSources
                     binding.Binding = "{}";
                 }
 
-                else if (TypeHelper.IsCollection(itemtype))
+                else if (TypeHelper.IsGenericCollection(itemtype))
                 {
                     binding.IsCollection = true;
                     binding.IsContentFolder = IsContentFolder(item.Key);
@@ -285,7 +287,7 @@ namespace Kooboo.Sites.DataSources
                 bindings.Add(FieldName, binding);
             }
 
-            else if (TypeHelper.IsCollection(FieldType))
+            else if (TypeHelper.IsGenericCollection(FieldType))
             {
                 ParameterBinding binding = new ParameterBinding();
                 binding.FullTypeName = FieldType.FullName;
@@ -378,7 +380,7 @@ namespace Kooboo.Sites.DataSources
             }
 
             model.ModelType = type.Name;
-            model.Enumerable = TypeHelper.IsCollection(type);
+            model.Enumerable = TypeHelper.IsGenericCollection(type);
             model.IsPagedResult = setting.IsPagedResult;
             if (model.Enumerable)
             {
@@ -513,7 +515,7 @@ namespace Kooboo.Sites.DataSources
                 {
                     Name = item.Key,
                     Type = subType.FullName,
-                    Enumerable = TypeHelper.IsCollection(subType),
+                    Enumerable = TypeHelper.IsGenericCollection(subType),
                     IsComplexType = TypeHelper.IsComplexType(subType)
                 };
 

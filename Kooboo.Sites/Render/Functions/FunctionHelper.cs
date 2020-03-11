@@ -1,5 +1,6 @@
-﻿using Kooboo.Data.Context;
-using Kooboo.TAL;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using System.Collections.Generic;
 
 namespace Kooboo.Sites.Render.Functions
@@ -42,6 +43,13 @@ namespace Kooboo.Sites.Render.Functions
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        var kfunc = new kScriptFunction(); 
+                        kfunc.Parameters = ParseParamter(functionexpr.Body);
+                        kfunc.FunctionName = functionexpr.Name;
+                        return kfunc;  
                     }
                 }
             } 
@@ -144,15 +152,17 @@ namespace Kooboo.Sites.Render.Functions
         public static List<object> RenderParameter(RenderContext context, List<IFunction> paras)
         {
             List<object> values = new List<object>();
-            foreach (var item in paras)
-            {
-                var value = item.Render(context);
-                values.Add(value); 
-            } 
+            if (paras != null)
+            { 
+                foreach (var item in paras)
+                {
+                    var value = item.Render(context);
+                    values.Add(value);
+                }
+            }
             return values; 
         }
-         
-
+          
         public class FunctionExpression
         {
             public string Name { get; set; }

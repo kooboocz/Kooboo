@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.IO;
 using System.Linq;
 using Kooboo.IndexedDB;
@@ -297,6 +299,9 @@ namespace Kooboo.Data.GeoLocation
             return null; 
         }
 
-
+        public static void RenewDataBase()
+        {
+            IPLocation.InitDatabase(false);
+        }
     }
 }

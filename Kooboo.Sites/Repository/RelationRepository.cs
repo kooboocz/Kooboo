@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB;
 using Kooboo.Sites.Models;
 using Kooboo.Sites.Relation;
 using Kooboo.Sites.Routing;
@@ -12,8 +14,8 @@ using Kooboo.Sites.Extensions;
 namespace Kooboo.Sites.Repository
 {
     public class RelationRepository : SiteRepositoryBase<ObjectRelation>
-    { 
-        internal override ObjectStoreParameters StoreParameters
+    {
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -151,15 +153,18 @@ namespace Kooboo.Sites.Repository
 
         private List<ObjectRelation> GetReferredByRelationViaRoutes(Guid objectYId, byte siteObjectType = 0)
         {
-            var route = SiteDb.Routes.GetByObjectId(objectYId);
             List<ObjectRelation> relations = new List<ObjectRelation>();
-            if (route != null)
+            if (objectYId != default(Guid))
             {
-                foreach (var relationitem in GetReferredByRelations(route.Id, siteObjectType))
+                var route = SiteDb.Routes.GetByObjectId(objectYId);
+                if (route != null)
                 {
-                    if (relations.Find(o => o.Id == relationitem.Id) == null)
+                    foreach (var relationitem in GetReferredByRelations(route.Id, siteObjectType))
                     {
-                        relations.Add(relationitem);
+                        if (relations.Find(o => o.Id == relationitem.Id) == null)
+                        {
+                            relations.Add(relationitem);
+                        }
                     }
                 }
             }

@@ -1,4 +1,6 @@
-﻿using Kooboo.Sites.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Models;
 using Kooboo.Api.ApiResponse;
 using System;
 using System.Collections.Generic;
@@ -91,7 +93,7 @@ namespace Kooboo.Web.Api.Implementation
 
         }
 
-        [Kooboo.Attributes.RequireParameters("Id", "RootId", "SubItemTemplate", "SubItemContainer")]
+        //[Kooboo.Attributes.RequireParameters("Id", "RootId", "SubItemTemplate", "SubItemContainer")]
         public bool UpdateTemplate(ApiCall call)
         {
             string template = call.GetValue("Template");

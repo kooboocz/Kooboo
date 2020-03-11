@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,12 +26,19 @@ namespace Kooboo.IndexedDB.Dynamic
                 if (HasNew(old, setting))
                 {
                     setting = CombineSetting(old, setting);
+                    setting.EnableLog = setting.EnableLog;
                     var allbytes = converter.ToBytes(setting);
                     File.WriteAllBytes(SettingFile, allbytes);
                     return setting;
                 }
                 else
                 {
+                    if (old.EnableLog != setting.EnableLog)
+                    {
+                        old.EnableLog = setting.EnableLog;
+                        var allbytes = converter.ToBytes(old);
+                        File.WriteAllBytes(SettingFile, allbytes);
+                    }
                     return old;
                 }
             }
@@ -361,12 +370,7 @@ namespace Kooboo.IndexedDB.Dynamic
                         int len = 0;
                         if (valuetype == typeof(string))
                         {
-                            if (value.ToString().Length > (Constants.DefaultColLen - 300))
-                            {
-                                len = int.MaxValue;
-                            }
-                            else
-                            { len = Constants.DefaultColLen; }
+                            len = DetermineStringLen(value.ToString());
                         }
                         else
                         {
@@ -389,12 +393,7 @@ namespace Kooboo.IndexedDB.Dynamic
                         int len = 0;
                         if (valuetype == typeof(string))
                         {
-                            if (item.Value.ToString().Length > (Constants.DefaultColLen - 300))
-                            {
-                                len = int.MaxValue;
-                            }
-                            else
-                            { len = Constants.DefaultColLen; }
+                            DetermineStringLen(item.Value.ToString());
                         }
                         else
                         {
@@ -414,19 +413,35 @@ namespace Kooboo.IndexedDB.Dynamic
                 foreach (var item in AllProperties)
                 {
                     setting.AppendColumn(item.Key, item.Value, 0);
-
-
+                     
                 }
             }
 
             return setting.Columns.ToList();
         }
 
+        private static int DetermineStringLen(object objvalue)
+        {
+            if (objvalue == null)
+            {
+                return Constants.DefaultColLen; 
+            }
 
+            var value = objvalue.ToString(); 
+              
+            int len = Constants.DefaultColLen;
+
+            int valuelen = value.Length;
+
+            while (valuelen +100> len)
+            {
+                len = len + Constants.DefaultColLen;
+            }
+            return len;
+        }
 
         private static bool QuickCheckChange(List<TableColumn> newcols, Setting setting)
         {
-
             if (newcols.Count() != setting.Columns.Count())
             {
                 return true;
@@ -445,10 +460,16 @@ namespace Kooboo.IndexedDB.Dynamic
                 }
                 else
                 {
-                    if (item.Length > find.Length || item.DataType != find.DataType || item.IsIndex != find.IsIndex || item.IsIncremental != find.IsIncremental || item.Seed != find.Seed || item.Increment != find.Increment || item.IsUnique != find.IsUnique || item.IsPrimaryKey != find.IsPrimaryKey || item.ControlType != find.ControlType || item.Setting != find.Setting)
+                    if (item.DataType != find.DataType || item.IsIndex != find.IsIndex || item.IsIncremental != find.IsIncremental || item.Seed != find.Seed || item.Increment != find.Increment || item.IsUnique != find.IsUnique || item.IsPrimaryKey != find.IsPrimaryKey || item.ControlType != find.ControlType || item.Setting != find.Setting)
                     {
                         return true;
                     }
+
+                    if (item.Length > 0 && item.Length != find.Length)
+                    {
+                        return true;
+                    }
+
                 }
             }
 
@@ -458,7 +479,12 @@ namespace Kooboo.IndexedDB.Dynamic
         public static CompareResult CompareSetting(object newObject, Setting setting)
         {
             var colums = GetTypeColumns(newObject);
-            return CompareColSetting(colums, setting);
+            var result = CompareColSetting(colums, setting);
+            if (result.NewSetting != null)
+            {
+                result.NewSetting.EnableLog = setting.EnableLog;
+            }
+            return result;
         }
 
         // use for adding data, will only increase col, does not descrease col... 
@@ -492,30 +518,29 @@ namespace Kooboo.IndexedDB.Dynamic
                     {
                         if (item.DataType == typeof(double).FullName || item.DataType == typeof(decimal).FullName || item.DataType == typeof(long).FullName)
                         {
-                            continue; // does not change the datatime, because JS 
+                            continue; // does not change the datatime, because JS
                         }
                     }
 
                     else
                     {
                         // allow change or datatype or length..... 
-                        if (item.Length > find.Length && item.Length != Constants.DefaultColLen)
+                        if (item.Length > find.Length && item.Length > 0 && item.Length != Constants.DefaultColLen)
                         {
                             find.Length = item.Length;
                             result.HasChange = true;
                             result.ShouldRebuild = true;
                         }
 
-
                         if (item.DataType != find.DataType)
                         {
-                            if(!CanConvertType(item.ClrType, find.ClrType))
+                            if (!CanConvertType(item.ClrType, find.ClrType))
                             {
                                 find.DataType = item.DataType;
-                                find.Length = SettingHelper.GetColumnLen(find.ClrType, find.Length);     
+                                find.Length = SettingHelper.GetColumnLen(find.ClrType, find.Length);
                                 result.HasChange = true;
                                 result.ShouldRebuild = true;
-                            }   
+                            }
                         }
                     }
                 }
@@ -583,15 +608,15 @@ namespace Kooboo.IndexedDB.Dynamic
                 }
                 else
                 {
-                    var rightvalue = Accessor.ChangeType(data, exists); 
+                    var rightvalue = Accessor.ChangeType(data, exists);
                     if (rightvalue == null)
                     {
-                        return false; 
+                        return false;
                     }
                     else
                     {
-                        return true; 
-                    }   
+                        return true;
+                    }
                 }
             }
             return false;
@@ -634,7 +659,6 @@ namespace Kooboo.IndexedDB.Dynamic
                 result.ShouldRebuild = true;
             }
 
-
             foreach (var item in columns)
             {
                 if (item.IsSystem)
@@ -657,7 +681,7 @@ namespace Kooboo.IndexedDB.Dynamic
                 else
                 {
                     // allow change or datatype or length..... 
-                    if (item.Length > find.Length && item.Length != Constants.DefaultColLen)
+                    if (item.Length != find.Length && item.Length > 0 && item.Length != Constants.DefaultColLen)
                     {
                         find.Length = item.Length;
 
@@ -693,6 +717,7 @@ namespace Kooboo.IndexedDB.Dynamic
                         {
                             newprimaryfield = find.Name;
                         }
+                        result.ShouldRebuild = true;
                     }
 
                     if (item.ControlType != find.ControlType || item.Setting != find.Setting)
@@ -721,6 +746,12 @@ namespace Kooboo.IndexedDB.Dynamic
                 }
             }
 
+            //
+            if (result.HasChange || result.ShouldRebuild)
+            {
+                EnsureColumnRelativePosition(result.NewSetting.Columns);
+            }
+
             return result;
         }
 
@@ -734,6 +765,29 @@ namespace Kooboo.IndexedDB.Dynamic
 
             return back;
         }
+
+
+
+        public static void EnsureColumnRelativePosition(HashSet<TableColumn> columns)
+        {
+            int nextposition = 0;
+            foreach (var item in columns.OrderBy(o => o.relativePosition))
+            {
+                item.relativePosition = nextposition;
+
+                if (nextposition != int.MaxValue && item.Length != int.MaxValue)
+                {
+                    nextposition = nextposition + item.Length + 8;
+                }
+                else
+                {
+                    nextposition = int.MaxValue;
+                }
+            }
+
+            // move the large item to the ends.  
+        }
+
 
     }
 

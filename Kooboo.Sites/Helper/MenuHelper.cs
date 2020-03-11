@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Data.Models;
 using Kooboo.Sites.Models;
 using System;
@@ -47,7 +49,7 @@ namespace Kooboo.Sites.Helper
             return false;
         }
 
-        internal static string PraseSelfTemplate(Menu menu)
+        internal static string GetSelfTemplate(Menu menu)
         {
             if (!string.IsNullOrEmpty(menu.Template))
             {
@@ -133,18 +135,53 @@ namespace Kooboo.Sites.Helper
             }
 
             string url = menu.Url;
+
             if (string.IsNullOrWhiteSpace(url))
             {
                 return null;
             }
-            if (context != null && context.WebSite.EnableSitePath)
+
+            if (url.ToLower().StartsWith("https://") || url.ToLower().StartsWith("http://"))
             {
-                return Lib.Helper.UrlHelper.Combine("/" + context.Culture, url);
+                return url; 
             }
-            else
+              
+             
+            if (context.WebSite.EnableMultilingual && context.WebSite.Culture.Count > 1)
             {
-                return url;
+                if (context.WebSite.EnableSitePath)
+                {
+                    string path = context.Request.SitePath;
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        path = context.Culture;
+                    }
+
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        path = context.WebSite.DefaultCulture;
+                    }
+
+                    if (url.StartsWith("/"))
+                    {
+                        return "/" + path + url;
+                    }
+                    else
+                    {
+                        return "/" + path + "/" +  url;
+                    }
+                }
+                else
+                {
+                    string culture = context.Culture;
+                    if (!string.IsNullOrWhiteSpace(culture))
+                    {
+                        return Lib.Helper.UrlHelper.AppendQueryString(url, "lang", culture);
+                    }
+                }
             }
+            return url; 
+
         }
 
         /// <summary>
@@ -156,10 +193,16 @@ namespace Kooboo.Sites.Helper
             string template = null;
             if (!string.IsNullOrEmpty(Menu.Url) && !string.IsNullOrEmpty(Menu.Name))
             {
-                template = MenuHelper.PraseSelfTemplate(Menu);
+
+                EnsureMenuRenderData(Menu);
+
+                var renderdata = Menu.TempRenderData; 
+
+                template = renderdata.FineTemplate;
+                
                 template = template.Replace(MenuHelper.MarkHref, Menu.Url);
                 template = template.Replace(MenuHelper.MarkAnchorText, Menu.Name);
-                if (Menu.RenderId)
+                if (renderdata.RenderId)
                 {
                     string parentid = null; if (Menu.Parent != null)
                     { parentid = Menu.Parent.Id.ToString(); }
@@ -169,12 +212,12 @@ namespace Kooboo.Sites.Helper
                     }
                     template = template.Replace(MenuHelper.MarkCurrentId, Menu.Id.ToString());
                 }
-                if (Menu.HasActiveClass)
+                if (renderdata.HasActiveClass)
                 {
                     string activeclassname = string.Empty;
                     if (MenuHelper.IsActive(Menu, context.RenderContext))
                     {
-                        activeclassname = Menu.ActiveClass;
+                        activeclassname = renderdata.ActiveClass;
                     }
                     template = template.Replace(MenuHelper.MarkActiveClassReplacer, activeclassname);
                 }
@@ -242,11 +285,17 @@ namespace Kooboo.Sites.Helper
             if (!string.IsNullOrEmpty(Menu.Url) && !string.IsNullOrEmpty(menuname))
             {
                 string url = getMenuUrl(Menu, context);
+                 
+                EnsureMenuRenderData(Menu);
 
-                template = MenuHelper.PraseSelfTemplate(Menu);
+                var renderdata = Menu.TempRenderData;
+
+                template = renderdata.FineTemplate;
+                  
                 template = template.Replace(MenuHelper.MarkHref, url);
                 template = template.Replace(MenuHelper.MarkAnchorText, menuname);
-                if (Menu.RenderId)
+
+                if (renderdata.RenderId)
                 {
                     string parentid = null; if (Menu.Parent != null)
                     { parentid = Menu.Parent.Id.ToString(); }
@@ -256,12 +305,12 @@ namespace Kooboo.Sites.Helper
                     }
                     template = template.Replace(MenuHelper.MarkCurrentId, Menu.Id.ToString());
                 }
-                if (Menu.HasActiveClass)
+                if (renderdata.HasActiveClass)
                 {
                     string activeclassname = string.Empty;
                     if (MenuHelper.IsActive(Menu, context))
                     {
-                        activeclassname = Menu.ActiveClass;
+                        activeclassname = renderdata.ActiveClass;
                     }
                     template = template.Replace(MenuHelper.MarkActiveClassReplacer, activeclassname);
                 }
@@ -367,5 +416,78 @@ namespace Kooboo.Sites.Helper
             }
             return null;
         }
+
+        public static MenuRenderData ParseRenderTemplate(string template)
+        {
+            if (!string.IsNullOrEmpty(template))
+            {
+                MenuRenderData result = new MenuRenderData(); 
+
+                int activeindex = template.IndexOf("{activeclass:");
+                if (activeindex >= 0)
+                {
+                    var endindex = template.IndexOf("}", activeindex);
+                    if (endindex > 0)
+                    {
+                        var activeclass = template.Substring(activeindex, endindex - activeindex);
+                        activeclass = activeclass.Replace("{activeclass:", "");
+                        result.HasActiveClass = true;
+                        result.ActiveClass = activeclass;
+                    }
+
+                    if (template.IndexOf(" class", StringComparison.OrdinalIgnoreCase) != -1)
+                    {
+                        // find the right place to insert 
+                        int index = template.IndexOf(" class", StringComparison.OrdinalIgnoreCase);
+                        int nextequalmark = template.IndexOf("=", index);
+                        if (index > -1 && nextequalmark > -1)
+                        {
+                            string newtemplate = template.Substring(0, activeindex) + template.Substring(endindex + 1);
+                            var insertposition = MenuHelper.FindClassInsertPosition(newtemplate);
+
+                            if (insertposition > -1)
+                            {
+                                template = newtemplate.Substring(0, insertposition) + MenuHelper.MarkActiveClassReplacer + " " + newtemplate.Substring(insertposition);
+                            }
+                            else
+                            {
+                                template = template.Substring(0, activeindex) + "class='" + MenuHelper.MarkActiveClassReplacer + "'" + template.Substring(endindex + 1);
+                            }
+                        }
+                        else
+                        {
+                            template = template.Substring(0, activeindex) + "class='" + MenuHelper.MarkActiveClassReplacer + "'" + template.Substring(endindex + 1);
+                        }
+
+                    }
+                    else
+                    {
+                        template = template.Substring(0, activeindex) + "class='" + MenuHelper.MarkActiveClassReplacer + "'" + template.Substring(endindex + 1);
+                    }
+                }
+
+                result.FineTemplate = template; 
+
+                if (template.IndexOf(MenuHelper.MarkParentId) > -1 || template.IndexOf(MenuHelper.MarkCurrentId) > -1)
+                {
+                    result.RenderId = true;
+                }
+
+                return result; 
+            }
+            else
+            {
+                return new MenuRenderData() { FineTemplate = template }; 
+            }
+        }
+
+        public static void EnsureMenuRenderData(Menu menu)
+        {
+            if (menu.TempRenderData == null)
+            {
+                var template = GetSelfTemplate(menu);
+                menu.TempRenderData = ParseRenderTemplate(template);  
+            }
+        } 
     }
 } 

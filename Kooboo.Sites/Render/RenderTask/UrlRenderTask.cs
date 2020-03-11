@@ -1,9 +1,13 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Extensions;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Routing;
 using System.Collections.Generic;
 using System;
+using Kooboo.Sites.Relation;
+using Kooboo.Sites.Models;
 
 namespace Kooboo.Sites.Render
 {
@@ -14,6 +18,9 @@ namespace Kooboo.Sites.Render
         private ValueRenderTask RenderUrlValueTask { get; set; }
 
         private bool IsExternalLink { get; set; }
+
+        // special, no change. 
+        private bool IsSpecial { get; set; }
 
         public bool ClearBefore
         {
@@ -27,15 +34,20 @@ namespace Kooboo.Sites.Render
         {
             this.Url = Url;
 
-            if (Functions.FunctionHelper.IsFunction(this.Url))
-            {
-                /// might be a function. 
-                this.RenderUrlValueTask = new ValueRenderTask(this.Url);
-            }
+          this.IsSpecial = Kooboo.Sites.Service.DomUrlService.IsSpecialUrl(Url);
 
-            if (Service.DomUrlService.IsExternalLink(Url) || Url == "#")
+            if (!IsSpecial)
             {
-                this.IsExternalLink = true;
+                if (Functions.FunctionHelper.IsFunction(this.Url))
+                {
+                    /// might be a function.  
+                    this.RenderUrlValueTask = new ValueRenderTask(this.Url); 
+                }
+
+                if (Service.DomUrlService.IsExternalLink(Url) || Url == "#")
+                {
+                    this.IsExternalLink = true;
+                }
             }
         }
 
@@ -50,7 +62,12 @@ namespace Kooboo.Sites.Render
         {
             string result = string.Empty;
 
-            if (this.RenderUrlValueTask != null)
+            if (IsSpecial)
+            {
+                return this.Url;
+            }
+
+            else if (this.RenderUrlValueTask != null)
             {
                 result = RenderUrlValueTask.Render(context);
             }
@@ -67,7 +84,7 @@ namespace Kooboo.Sites.Render
                     if (route != null)
                     {
                         if (route.DestinationConstType == ConstObjectType.KoobooSystem)
-                        { 
+                        {
                             result = RenderSystemLink(context, route);
                         }
                         else
@@ -115,18 +132,18 @@ namespace Kooboo.Sites.Render
                 {
                     if (context.WebSite.EnableSitePath)
                     {
-                        string path = context.Request.SitePath; 
+                        string path = context.Request.SitePath;
                         if (string.IsNullOrEmpty(path))
                         {
-                            path = context.Culture; 
+                            path = context.Culture;
                         }
 
                         if (string.IsNullOrEmpty(path))
                         {
-                            path = context.WebSite.DefaultCulture; 
+                            path = context.WebSite.DefaultCulture;
                         }
 
-                        return "/" + path + result;      
+                        return "/" + path + result;
                     }
                     else
                     {
@@ -135,9 +152,9 @@ namespace Kooboo.Sites.Render
                         {
                             return Lib.Helper.UrlHelper.AppendQueryString(result, "lang", culture);
                         }
-                    }  
-                }       
-             
+                    }
+                }
+
             }
 
             return result;
@@ -204,15 +221,15 @@ namespace Kooboo.Sites.Render
                             if (DataSources.ParameterBinder.IsValueBinding(paravalue))
                             {
                                 Parameters[item.Key] = value;
-                            }  
+                            }
                         }
                     }
                     else
                     {
-                       // if (!Parameters.ContainsKey(item.Key))
+                        // if (!Parameters.ContainsKey(item.Key))
                         //{
-                            Parameters[item.Key] = item.Value;
-                       // }
+                        Parameters[item.Key] = item.Value;
+                        // }
                     }
 
                 }
@@ -237,7 +254,7 @@ namespace Kooboo.Sites.Render
         {
             if (result == null)
             {
-                return null; 
+                return null;
             }
             int start = result.IndexOf("{");
             if (start == -1)
@@ -279,7 +296,6 @@ namespace Kooboo.Sites.Render
         }
 
 
-
         public string RenderSystemLink(RenderContext context, Routing.Route route)
         {
             Render.FrontContext frontContext = context.GetItem<Render.FrontContext>();
@@ -290,7 +306,7 @@ namespace Kooboo.Sites.Render
             byte constType = ConstObjectType.Unknown;
             if (!byte.TryParse(constTypeString, out constType))
             {
-                constType = ConstObjectType.GetByte(constTypeString);
+                constType = ConstTypeContainer.GetConstType(constTypeString);
             }
             var id = route.Parameters.GetValue("nameorid");
 
@@ -299,8 +315,8 @@ namespace Kooboo.Sites.Render
                 var view = context.WebSite.SiteDb().Views.GetByNameOrId(id);
 
                 if (view != null)
-                {
-                    var relation = context.WebSite.SiteDb().Relations.GetReferredBy(view, ConstObjectType.Page);
+                { 
+                    var relation = GetViewPageRelation(context, view, context.WebSite.SiteDb().Log.Store.LastKey);
 
                     if (relation != null && relation.Count > 0)
                     {
@@ -341,5 +357,30 @@ namespace Kooboo.Sites.Render
         {
             result.Add(new RenderResult() { Value = Render(context) });
         }
+
+
+        // relation cache... 
+        private long lastLog { get; set; } = 0; 
+        public List<ObjectRelation> GetViewPageRelation(RenderContext context, View view, long LastChange)
+        {
+            if (LastChange != lastLog)
+            {
+                ViewPageRelationCache = new Dictionary<Guid, List<ObjectRelation>>(); 
+            }
+
+            if (!ViewPageRelationCache.ContainsKey(view.Id))
+            {
+                var relation = context.WebSite.SiteDb().Relations.GetReferredBy(view, ConstObjectType.Page);
+                ViewPageRelationCache[view.Id] = relation;
+                return relation; 
+            }
+            else
+            {
+                return ViewPageRelationCache[view.Id]; 
+            }
+        }
+
+        public Dictionary<Guid, List<ObjectRelation>> ViewPageRelationCache { get; set; } = new Dictionary<Guid, List<ObjectRelation>>(); 
+
     }
 }

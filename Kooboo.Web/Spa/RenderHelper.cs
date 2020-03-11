@@ -1,4 +1,6 @@
-﻿using Kooboo.Lib.Helper;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Lib.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -132,28 +134,13 @@ namespace Kooboo.Web.Spa
          
         public static string CombinePath(string Root, string RelativeUrl)
         {
-            if (!Root.EndsWith("\\"))
-            {
-                Root = Root + "\\"; 
-            }
-
             if (string.IsNullOrEmpty(RelativeUrl))
             {
-                return Root;  
+                return Root;
             }
-            RelativeUrl = RelativeUrl.Replace("/", "\\"); 
-            if (RelativeUrl.StartsWith("\\"))
-            {
-                RelativeUrl = RelativeUrl.Substring(1); 
-            }
-            return System.IO.Path.Combine(Root, RelativeUrl); 
+            return Lib.Compatible.CompatibleManager.Instance.System.CombinePath(Root, RelativeUrl);
         }
-
-        public static string GetRelativeUrl(Uri AbsoluteUri, SpaRenderOption option)
-        {
-            string RawRelativeUrl = Kooboo.Lib.Helper.UrlHelper.RelativePath(AbsoluteUri);
-            return GetRelativeUrl(RawRelativeUrl, option); 
-        }
+         
         public static string GetRelativeUrl(string RawRelativeUrl, SpaRenderOption option)
         {
            string  RelativeUrl = RemoveQuestionMark(RawRelativeUrl); 

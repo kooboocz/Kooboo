@@ -1,11 +1,13 @@
-﻿using Kooboo.IndexedDB;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB;
 using Kooboo.Sites.Models;
 
 namespace Kooboo.Sites.Repository
 {
   public  class LayoutRepository : SiteRepositoryBase<Layout>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {

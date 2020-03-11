@@ -1,6 +1,7 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Kooboo.Data.Interface;
 using Kooboo.IndexedDB;
 using Kooboo.IndexedDB.Query;
@@ -21,7 +22,7 @@ namespace Kooboo.Data.Repository
             }
         }
         
-        private string StoreName
+        protected virtual string StoreName
         {
             get
             {
@@ -49,12 +50,15 @@ namespace Kooboo.Data.Repository
                     lock (_locker)
                     {
                         if (_store == null)
-                        {   
-                              _store = DatabaseDb.GetOrCreateObjectStore<Guid, TValue>(StoreName, StoreParameters); 
+                        {
+                            var para = StoreParameters;
+                            para.SetPrimaryKeyField<TValue>(o => o.Id); 
 
-                            if (!_store.CheckSameSetting(StoreParameters))
+                              _store = DatabaseDb.GetOrCreateObjectStore<Guid, TValue>(StoreName, para); 
+
+                            if (!_store.CheckSameSetting(para))
                             {
-                                _store = DatabaseDb.RebuildObjectStore<Guid, TValue>(_store, StoreParameters); 
+                                _store = DatabaseDb.RebuildObjectStore<Guid, TValue>(_store, para); 
                             }
                             
                         }
@@ -101,6 +105,7 @@ namespace Kooboo.Data.Repository
             {
                 Store.delete(id);
                 RaiseEvent(old, ChangeType.Delete, old);
+                Store.Close(); 
             }
         }
 
@@ -109,7 +114,8 @@ namespace Kooboo.Data.Repository
             if (value != null)
             {
                 Store.delete(value.Id);
-                RaiseEvent(value, ChangeType.Delete,value); 
+                RaiseEvent(value, ChangeType.Delete,value);
+                Store.Close(); 
             }
         }
 

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;    
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System.Collections.Generic;    
 using System.Diagnostics;
 
 namespace Kooboo.Lib.Helper
@@ -82,6 +84,22 @@ namespace Kooboo.Lib.Helper
             p.WaitForExit();
             p.Close();
             return strOutput;
+        }
+
+        public static void ExeCmdNoWait(string cmd)
+        {
+            Process p = new Process();
+            p.StartInfo.FileName = "cmd.exe";
+
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardInput = true;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.CreateNoWindow = false;
+            p.Start();
+
+            p.StandardInput.WriteLine(cmd);
+           
         }
 
     }

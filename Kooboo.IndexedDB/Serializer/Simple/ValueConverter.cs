@@ -1,9 +1,12 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Kooboo.IndexedDB.Helper;
 
 namespace Kooboo.IndexedDB.Serializer.Simple
 {
@@ -267,28 +270,25 @@ namespace Kooboo.IndexedDB.Serializer.Simple
         }
 
         public static byte[] ToBytes(DateTime value)
-        { 
-            return BitConverter.GetBytes(value.Ticks);
+        {
+            return DateTimeUtcHelper.ToBytes(value);
         }
 
         public static DateTime ToDateTime(byte[] bytes)
         {
-            Int64 datetick = BitConverter.ToInt64(bytes, 0);
-            return new DateTime(datetick);
+            return DateTimeUtcHelper.ToDateTime(bytes);
         }
 
         public static byte[] DateTimeToBytes(object value)
         {
             DateTime datetime = Convert.ToDateTime(value);
-            return BitConverter.GetBytes(datetime.Ticks); 
+            return DateTimeUtcHelper.ToBytes(datetime);
         }
 
         public static object FromDateTimeBytes(byte[] bytes)
-        { 
-            Int64 datetick  = BitConverter.ToInt64(bytes, 0);
-            return new DateTime(datetick); 
+        {
+            return DateTimeUtcHelper.ToDateTime(bytes);
         }
-        
 
         public static byte[] ToBytes(byte value)
         { 
@@ -382,6 +382,6 @@ namespace Kooboo.IndexedDB.Serializer.Simple
         {
             return bytes; 
         }
-        
+       
     }
 }

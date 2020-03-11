@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Lib.Helper;
 using Kooboo.Render;
 using Kooboo.Render.ObjectSource;
@@ -38,17 +40,17 @@ namespace Kooboo.Web.JsTest
 
             if (!string.IsNullOrEmpty(Folder))
             {
-                para.Add("folder", WebUtility.UrlEncode(Folder));
+                para.Add("folder", Folder);
             }
 
             if (!string.IsNullOrEmpty(File))
             {
-                para.Add("file", WebUtility.UrlEncode(File));
+                para.Add("file", File);
             }
 
             if (!string.IsNullOrEmpty(function))
             {
-                para.Add("function", WebUtility.UrlEncode(function));
+                para.Add("function", function);
             }
 
             return Lib.Helper.UrlHelper.AppendQueryString(url, para);

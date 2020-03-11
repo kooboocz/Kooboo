@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Data.Language;
 using Kooboo.Dom;
 using Kooboo.Sites.Extensions;
@@ -42,7 +44,7 @@ namespace Kooboo.Sites.Diagnosis.Implementation
 
             this.session.Headline = Hardcoded.GetValue("Checking", session.context) + " " + Hardcoded.GetValue("Html tag", session.context) + "...";
 
-            var allrepos = sitedb.AllRepositories;
+            var allrepos = sitedb.ActiveRepositories();
 
             foreach (var repo in allrepos)
             {

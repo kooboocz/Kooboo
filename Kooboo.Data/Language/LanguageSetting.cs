@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Data.Models;
 using System;
 using System.Collections.Generic;
@@ -21,15 +23,8 @@ namespace Kooboo.Data.Language
             //sep[4] = "=";
             LangSep = sep;
 
-            if (string.IsNullOrEmpty(AppSettings.CmsLang))
-            {
-                SystemLangCode = "en";
-            }
-            else
-            {
-                SystemLangCode = AppSettings.CmsLang.ToLower();
-            }
-
+            SystemLangCode = AppSettings.CmsLang.ToLower();
+             
             LangFiles = getLangFiles();
 
             CmsLangs = initcmsLangs();
@@ -236,7 +231,7 @@ namespace Kooboo.Data.Language
 
             string basedir = AppSettings.RootPath;
 
-            string langpath = System.IO.Path.Combine(AppSettings.RootPath, "lang");
+            string langpath = System.IO.Path.Combine(AppSettings.RootPath, "Lang");
 
             if (System.IO.Directory.Exists(langpath))
             {
@@ -301,7 +296,7 @@ namespace Kooboo.Data.Language
 
             foreach (CultureInfo culture in cultures)
             {
-                RegionInfo region = new RegionInfo(culture.LCID);
+                RegionInfo region = new RegionInfo(culture.Name);
                 if (region != null)
                 {
                     if (region.TwoLetterISORegionName.ToLower() == regionCode)

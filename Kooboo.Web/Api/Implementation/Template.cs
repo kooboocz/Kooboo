@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Template;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Template;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Repository;
 using Kooboo.Sites.Sync;
@@ -295,6 +297,15 @@ namespace Kooboo.Web.Api.Implementation
                 data.Tags = formResult.FormData["tags"];
             }
 
+            if (formResult.FormData.ContainsKey("price"))
+            {
+                data.Price=decimal.Parse(formResult.FormData["price"]);
+            }
+            if (formResult.FormData.ContainsKey("currency"))
+            {
+                data.Price = decimal.Parse(formResult.FormData["currency"]);
+            }
+
             data.UserId = call.Context.User.Id;
 
             if (formResult.FormData.ContainsKey("IsPrivate"))
@@ -335,7 +346,7 @@ namespace Kooboo.Web.Api.Implementation
             return data;
         }
 
-        public void Share(ApiCall call)
+        public virtual void Share(ApiCall call)
         {
             SiteDb siteDb = call.WebSite != null ? call.WebSite.SiteDb() : null;
             if (siteDb == null)
@@ -377,7 +388,7 @@ namespace Kooboo.Web.Api.Implementation
             }
         }
 
-        public void ShareBatch(ApiCall call)
+        public virtual void ShareBatch(ApiCall call)
         {
             SiteDb siteDb = call.WebSite != null ? call.WebSite.SiteDb() : null;
 

@@ -1,4 +1,6 @@
-﻿using Kooboo.Sites.Repository;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Repository;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,14 +12,15 @@ namespace Kooboo.Sites.SiteTransfer.Download
     {
         public DownloadManager()
         {
-            //if (Kooboo.Data.AppSettings.IsOnlineServer)
-            //{
-            //    this.MaxThread = 30; 
-            //}
-            //else
-            //{
-            //    this.MaxThread = 500; 
-            //}
+            this.MaxThread = 30;
+            if (Kooboo.Data.AppSettings.IsOnlineServer)
+            {
+                this.MaxThread = 30;
+            }
+            else
+            {
+                this.MaxThread = 500;
+            }
             this.CookieContainer = new System.Net.CookieContainer();
         }
 
@@ -33,7 +36,7 @@ namespace Kooboo.Sites.SiteTransfer.Download
 
         private List<Guid> pageids = new List<Guid>();
 
-        private int MaxThread = 200;
+        private int MaxThread { get; set; } = 200;
         private int CurrentThreadCount = 0;
 
         private bool CanAccept
@@ -150,7 +153,7 @@ namespace Kooboo.Sites.SiteTransfer.Download
             {
                 return new ImageExecutor() { Manager = this };
             }
-            else if (consttype == ConstObjectType.File)
+            else if (consttype == ConstObjectType.CmsFile)
             {
                 return new FileExecutor() { Manager = this };
             }

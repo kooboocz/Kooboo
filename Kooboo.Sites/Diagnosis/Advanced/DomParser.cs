@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Data.Language;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Models;
@@ -32,7 +34,7 @@ namespace Kooboo.Sites.Diagnosis.Advanced
 
             this.session.Headline = Hardcoded.GetValue("Checking", session.context) + " " + Hardcoded.GetValue("Dom structure", session.context) + "...";
 
-            var allrepos = sitedb.AllRepositories;
+            var allrepos = sitedb.ActiveRepositories();
 
             string name = Hardcoded.GetValue("Dom structure error", session.context);
 

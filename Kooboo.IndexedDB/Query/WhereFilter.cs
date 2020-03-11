@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB.Columns;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB.Columns;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -189,7 +191,6 @@ namespace Kooboo.IndexedDB.Query
         {
             return filter.Take(count);
         }
-
 
         private void ParseLambda(LambdaExpression lambda)
         {

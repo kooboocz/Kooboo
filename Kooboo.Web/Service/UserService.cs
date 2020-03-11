@@ -1,41 +1,56 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
 using Kooboo.Data.Context;
 using Kooboo.Data.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kooboo.Web.Service
 {
-   public static class UserService
-    {
-
+    public static class UserService
+    { 
         public static string GetToken(User user)
-        {   
-           if (Kooboo.Data.AppSettings.IsOnlineServer && !IsSameServer(user.TempRedirectUrl))
+        {
+            if (Kooboo.Data.AppSettings.IsOnlineServer && !IsSameServer(user.TempRedirectUrl))
             {
-                var gettokenurl = Kooboo.Data.Helper.AccountUrlHelper.User("GetToken");
-                gettokenurl += "?username=" + user.UserName + "&password=" + user.PasswordHash.ToString();    
-                var token = Kooboo.Lib.Helper.HttpHelper.Get<string>(gettokenurl);
-                return token; 
+                string token = GetTokenFromOnline(user);
+
+#if DEBUG
+                token = Kooboo.Data.Cache.AccessTokenCache.GetNewToken(user.Id);
+#endif
+
+                return token;
             }
-           else
+            else
             {
-                return Kooboo.Data.Cache.AccessTokenCache.GetNewToken(user.Id);   
-            }     
+                return Kooboo.Data.Cache.AccessTokenCache.GetNewToken(user.Id);
+            }
         }
 
+        public static string GetTokenFromOnline(User user)
+        {
+            var gettokenurl = Kooboo.Data.Helper.AccountUrlHelper.User("GetToken");
+            gettokenurl += "?username=" + user.UserName;
+            if (user.PasswordHash != default(Guid))
+            {
+                gettokenurl += "&password=" + user.PasswordHash.ToString();
+            }
+            else if (!string.IsNullOrEmpty(user.Password))
+            {
+                gettokenurl += "&password=" + user.Password;
+            }
         
-        public static string GetRedirectUrl(RenderContext context, User User, string currentRequestUrl,  string returnUrl)
+            return Kooboo.Lib.Helper.HttpHelper.Get<string>(gettokenurl);
+          
+        }
+
+        public static string GetRedirectUrl(RenderContext context, User User, string currentRequestUrl, string returnUrl, bool SameSiteRedirect)
         {
             if (!string.IsNullOrWhiteSpace(returnUrl))
             {
                 if (!returnUrl.StartsWith("/") && !returnUrl.StartsWith("\\"))
                 {
                     returnUrl = "/" + returnUrl;
-                }       
+                }
                 if (returnUrl.ToLower().StartsWith("http://") || returnUrl.ToLower().StartsWith("https://"))
                 {
                     returnUrl = Lib.Helper.UrlHelper.RelativePath(returnUrl);
@@ -43,34 +58,43 @@ namespace Kooboo.Web.Service
             }
 
             string baseurl = currentRequestUrl; 
-            if (Data.AppSettings.IsOnlineServer && !string.IsNullOrWhiteSpace(User.TempRedirectUrl))
-            {
-                baseurl = User.TempRedirectUrl; 
-            }
 
-            string url; 
+            if (!string.IsNullOrWhiteSpace(User.TempRedirectUrl))
+            {
+                if (Data.AppSettings.IsOnlineServer && !SameSiteRedirect)
+                {
+                    baseurl = User.TempRedirectUrl;
+                }
+            }
+              
+            string url;
 
             if (string.IsNullOrEmpty(returnUrl))
             {
-                url = Kooboo.Sites.Service.StartService.AfterLoginPage(context); 
+                context.User = User; 
+                url = Kooboo.Data.Service.StartService.AfterLoginPage(context);
             }
             else
             {
-                url = returnUrl; 
+                url = returnUrl;
             }
 
-            string fullurl = Kooboo.Lib.Helper.UrlHelper.Combine(baseurl, url);
+            string fullurl = url; 
+           
+            if (baseurl !=null && baseurl.ToLower().StartsWith("http://") || baseurl.ToLower().StartsWith("https://"))
+            {
+                fullurl = Kooboo.Lib.Helper.UrlHelper.Combine(baseurl, url);
+            }      
+            return fullurl;
+        }
 
-            return fullurl;    
-        }          
-
-        public static string GetLoginRedirectUrl(RenderContext context, User user, string currentrequesturl, string returnurl)
-        {     
-            string redirecturl = GetRedirectUrl(context, user, currentrequesturl, returnurl);
+        public static string GetLoginRedirectUrl(RenderContext context, User user, string currentrequesturl, string returnurl, bool SameSiteRedirect)
+        {
+            string redirecturl = GetRedirectUrl(context, user, currentrequesturl, returnurl, SameSiteRedirect);
 
             string token = GetToken(user);
 
-            return Lib.Helper.UrlHelper.AppendQueryString(redirecturl, "accesstoken", token);  
+            return Lib.Helper.UrlHelper.AppendQueryString(redirecturl, "accesstoken", token);
         }
 
         public static bool IsSameServer(string redirecturl)
@@ -92,7 +116,7 @@ namespace Kooboo.Web.Service
             return false;
 
         }
-     
+
         public static int getServerid(string redirecturl)
         {
             int index = redirecturl.IndexOf("://");
@@ -112,6 +136,34 @@ namespace Kooboo.Web.Service
             }
             return -1;
         }
-                   
+
+        public static Guid GuessOrgId(User user, string remotePublishurl)
+        {
+            remotePublishurl = remotePublishurl.ToLower();
+            if (remotePublishurl.StartsWith("https://"))
+            {
+                remotePublishurl = remotePublishurl.Substring("https://".Length);
+            }
+            else if (remotePublishurl.StartsWith("http://"))
+            {
+                remotePublishurl = remotePublishurl.Substring("http://".Length);
+            }
+
+            string[] parts = remotePublishurl.Split(".".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length == 3 && parts[1].StartsWith("kooboo"))
+            {
+                var org = parts[0];
+                if (!string.IsNullOrEmpty(org))
+                {
+                    return Lib.Helper.IDHelper.ParseKey(org);
+                }
+            }
+
+            return user.CurrentOrgId;
+
+        }
+
+
     }
 }

@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Sites.Render;
 using Kooboo.Lib;
 using Kooboo.Lib.Helper;
@@ -125,7 +127,8 @@ namespace Kooboo.Web.Spa
             var hashid = Lib.Security.Hash.ComputeHashGuid(htmlbody);
 
             var EvaluatorOption = new EvaluatorOption();
-            EvaluatorOption.IgnoreEvaluators = EnumEvaluator.Form | EnumEvaluator.LayoutCommand; 
+            EvaluatorOption.IgnoreEvaluators = EnumEvaluator.Form | EnumEvaluator.LayoutCommand;
+            EvaluatorOption.Evaluators = Kooboo.Render.Components.EvaluatorContainer.ListWithServerComponent; 
               
             var RenderPlan = RenderPlanCache.GetOrAddRenderPlan(hashid, () => RenderEvaluator.Evaluate(htmlbody, EvaluatorOption));
 

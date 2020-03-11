@@ -1,4 +1,6 @@
-﻿using Kooboo.Dom;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Dom;
 using Kooboo.IndexedDB;
 using Kooboo.Lib.Helper;
 using Kooboo.Sites.Models;
@@ -13,7 +15,7 @@ namespace Kooboo.Sites.Repository
 {
     public class StyleRepository : IEmbeddableRepositoryBase<Style>
     {
-        internal override IndexedDB.ObjectStoreParameters StoreParameters
+        public override IndexedDB.ObjectStoreParameters StoreParameters
         {
             get
             {

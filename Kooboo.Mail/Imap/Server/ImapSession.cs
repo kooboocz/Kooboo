@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -138,7 +140,7 @@ namespace Kooboo.Mail.Imap
 
         public async Task StartSecureConnection()
         {
-            var sslStream = new SslStream(TcpClient.GetStream(), true);
+            var sslStream = new SslStream(TcpClient.GetStream(), false);
             await sslStream.AuthenticateAsServerAsync(Server.Certificate, false, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12, false);
 
             IsSecureConnection = true;

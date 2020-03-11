@@ -1,6 +1,9 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using Kooboo.Dom;
+using Kooboo.Sites.DataTraceAndModify.CustomTraces;
 
 namespace Kooboo.Sites.Render
 {
@@ -36,20 +39,13 @@ namespace Kooboo.Sites.Render
 
                 if (options.RequireBindingInfo)
                 {
-                    string boundary = Kooboo.Lib.Helper.StringHelper.GetUniqueBoundary();
 
-                    var startbinding = new BindingObjectRenderTask()
-                    { ObjectType = "form", Boundary = boundary, NameOrId = FormId.ToString() };
-                    List<IRenderTask> bindingstarts = new List<IRenderTask>();
-                    bindingstarts.Add(startbinding);
-                    response.BindingTask = bindingstarts;
-
-                    var endbinding = new BindingObjectRenderTask()
-                    { ObjectType = "form", IsEndBinding = true, Boundary = boundary, NameOrId = FormId.ToString() };
-
-                    List<IRenderTask> bindingends = new List<IRenderTask>();
-                    bindingends.Add(endbinding);
-                    response.EndBindingTask = bindingends;
+                    if (response.BindingTask == null) response.BindingTask = new List<IRenderTask>();
+                    var traceability = new ComponentTrace(FormId.ToString(), "innerform");
+                    var bindingTask = new BindingRenderTask(traceability);
+                    response.BindingTask.Add(bindingTask);
+                    if (response.EndBindingTask == null) response.EndBindingTask = new List<IRenderTask>();
+                    response.EndBindingTask.Add(bindingTask.BindingEndRenderTask);
                 }
                 return response;
             }
@@ -65,11 +61,10 @@ namespace Kooboo.Sites.Render
             }
             if (Service.DomService.IsAspNetWebForm(el))
             {
-                return false; 
+                return false;
             }
 
-            return true;  
+            return true;
         }
     }
-
 }

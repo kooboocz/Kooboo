@@ -1,19 +1,15 @@
-﻿using Kooboo.Data.Interface;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
 using Kooboo.Extensions;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Kooboo.Lib.Extensions; 
 
 namespace Kooboo.Sites.Models
 {
-  public  class Synchronization : SiteObject
+    public class Synchronization : SiteObject
     {
         public Synchronization()
         {
-            this.ConstType = ConstObjectType.Synchronization; 
+            this.ConstType = ConstObjectType.Synchronization;
         }
         private Guid _id;
         public override Guid Id
@@ -24,21 +20,30 @@ namespace Kooboo.Sites.Models
                 if (_id == default(Guid))
                 {
                     string unique = this.SyncSettingId.ToString() + this.In.ToString();
-                    
-                    if (this.ObjectId != default(Guid))
+
+
+                    if (!string.IsNullOrWhiteSpace(this.StoreName))
                     {
                         unique += this.StoreName;
-                        unique += this.ObjectId.ToString(); 
-                    } 
+                    }
+                    else if (!string.IsNullOrWhiteSpace(this.TableName))
+                    {
+                        unique += "_tb_" + this.TableName;
+                    }
+                     
+                    if (this.ObjectId != default(Guid))
+                    {
+                        unique += this.ObjectId.ToString();
+                    }
                     if (this.In)
                     {
-                        unique += this.RemoteVersion.ToString(); 
+                        unique += this.RemoteVersion.ToString();
                     }
                     else
                     {
-                        unique += this.Version.ToString(); 
+                        unique += this.Version.ToString();
                     }
-                    _id = unique.ToHashGuid();  
+                    _id = unique.ToHashGuid();
                 }
                 return _id;
             }
@@ -48,13 +53,23 @@ namespace Kooboo.Sites.Models
                 _id = value;
             }
         }
-        
+
         public Guid SyncSettingId { get; set; }
 
         public string StoreName { get; set; }
 
+        public string TableName { get; set; }
+
+        public bool IsTable
+        {
+            get
+            {
+                return string.IsNullOrWhiteSpace(this.StoreName) && !string.IsNullOrWhiteSpace(this.TableName);
+            }
+        }
+
         // default(Guid) =  the main index... 
-        public Guid ObjectId { get; set; } 
+        public Guid ObjectId { get; set; }
 
         // in or out.. 
         public bool In { get; set; }
@@ -66,7 +81,7 @@ namespace Kooboo.Sites.Models
         {
             if (this.In)
             {
-                return Lib.Security.Hash.ComputeIntCaseSensitive(this.RemoteVersion.ToString()); 
+                return Lib.Security.Hash.ComputeIntCaseSensitive(this.RemoteVersion.ToString());
             }
             else
             {

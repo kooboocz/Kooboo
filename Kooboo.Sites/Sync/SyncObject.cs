@@ -1,4 +1,6 @@
-﻿using Kooboo.Extensions;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +31,17 @@ namespace Kooboo.Sites.Sync
 
         public string StoreName { get; set; }
 
+        public string TableName { get; set; }
+
+        public string TableColName { get; set; }
+
+        public bool IsTable
+        {
+            get
+            {
+                return !string.IsNullOrWhiteSpace(TableName) && string.IsNullOrWhiteSpace(StoreName); 
+            }
+        }
         /// <summary>
         /// The encoding string of bytes.. It is base64 for now.
         /// </summary>

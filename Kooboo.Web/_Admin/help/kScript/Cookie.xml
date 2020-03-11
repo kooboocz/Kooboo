@@ -1,9 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <KScriptSetting>
   <Name>cookie</Name>
-  <Description>Set cookie value</Description>
+  <Description>Get or set cookie value</Description>
   <Example><![CDATA[
     <script engine="kscript">
+    
+    // to get cookie value.
+    var value = k.cookie.yourcookiename; 
+    
+    // to set cookie with default value. 
+    k.cookie.yourcookiename= "the value"; 
 
     // 30 days cookie.
     k.cookie.set("cookiename", "cookievalue", 30);

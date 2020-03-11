@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using System.Collections.Generic; 
 
 namespace Kooboo.Data.Language
@@ -21,7 +23,7 @@ namespace Kooboo.Data.Language
                     {
                         _langkeys = new HashSet<string>();
                         // Data center names... 
-                        _langkeys.Add("HK(China)");
+                       // _langkeys.Add("HK(China)");
                          
                         // kooboo app.  
                         //_langkeys.Add("Confirm");

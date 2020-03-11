@@ -1,4 +1,6 @@
-﻿using Kooboo.Dom;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Dom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,6 +141,11 @@ namespace Kooboo.Sites.Helper
 
         public static Element FindSameElement(Element sourceElement, Document TargetDom)
         {
+            if (TargetDom == null)
+            {
+                return null; 
+            }
+
             var targets = FindElementsByDepth(TargetDom, sourceElement.depth);
 
             if (targets.Count() == 0)

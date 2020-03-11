@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using Kooboo.Sites.Models;
  
@@ -6,6 +8,11 @@ namespace Kooboo.Sites.SiteTransfer
 { 
     public  class TransferTask : SiteObject
     {
+        public TransferTask()
+        {
+            this.ConstType = ConstObjectType.TransferTask;
+        }
+
         private Guid _id; 
         public override Guid Id {
             get

@@ -1,13 +1,17 @@
-﻿using Kooboo.Sites.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Models;
 using Kooboo.IndexedDB;
 using System;
 using System.Linq;
+using Kooboo.Sites.Relation;
+using System.Collections.Generic;
 
 namespace Kooboo.Sites.Repository
 {
     public class MenuRepository : SiteRepositoryBase<Menu>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -24,13 +28,43 @@ namespace Kooboo.Sites.Repository
             Guid key;
             bool parseok = Guid.TryParse(NameOrGuid, out key);
             if (!parseok)
-            {
-                byte consttype = Service.ConstTypeService.GetConstType(typeof(Menu));
-                key = Data.IDGenerator.GetOrGenerate(NameOrGuid, consttype);
+            { 
+                key = Data.IDGenerator.GetOrGenerate(NameOrGuid, ConstObjectType.Menu);
             }
             return Get(key);
         }
-        
+
+        public override bool AddOrUpdate(Menu value)
+        {
+            EnsureNewRender(value); 
+            return base.AddOrUpdate(value);
+        }
+
+        public override bool AddOrUpdate(Menu value, Guid UserId)
+        {
+            EnsureNewRender(value);
+            return base.AddOrUpdate(value, UserId);
+        }
+         
+
+        private void EnsureNewRender(Menu menu)
+        {
+            if (menu == null)
+            {
+                return; 
+            }
+            menu.TempRenderData = null;
+
+            if (menu.children !=null)
+            {
+                foreach (var item in menu.children)
+                {
+                    EnsureNewRender(item); 
+                }
+            }
+            
+        }
+
         private bool HasActive(Menu menu, ref string searchstring)
         {
             if (!string.IsNullOrEmpty(menu.Template) && menu.Template.Contains(searchstring))

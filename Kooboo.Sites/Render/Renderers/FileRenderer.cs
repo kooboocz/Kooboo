@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System.Threading.Tasks;
 using Kooboo.Extensions;
 using Kooboo.Sites.Extensions;
 using Kooboo.Lib;
@@ -16,6 +18,16 @@ namespace Kooboo.Sites.Render
                 return;
             }
 
+            RenderFile(context, file);
+        }
+
+        public static async Task RenderAsync(FrontContext context)
+        {
+            var file = await context.SiteDb.Files.GetAsync(context.Route.objectId);
+            if (file == null)
+            {
+                return;
+            } 
             RenderFile(context, file);
         }
 

@@ -16,7 +16,7 @@
             TransferPage: GetRoute("Sites/Transfer", true),
             TemplatePage: GetRoute("Sites/Template", true),
             Transferring: GetRoute("Sites/Transferring", true),
-            Share: GetRoute("Sites/Share")
+            Share: GetRoute("Sites/Share", true)
         },
         Email: {
             Compose: GetRoute("Emails/Compose", true),
@@ -140,6 +140,7 @@
             DetailList: GetRoute("Sync/List")
         },
         Domain: {
+            IndexPage: GetRoute("Domains", true),
             Register: GetRoute("Domains/Register"),
             DomainBinding: GetRoute("Domains/DomainBinding", true),
             SiteBindingSettings: GetRoute("Domains/SiteBindingSettings", true)
@@ -160,6 +161,37 @@
                 DetailPage: GetRoute("ECommerce/Product/Type")
             },
             CategoriesPage: GetRoute("ECommerce/Product/Categories")
+        },
+        Market: {
+            IndexPage: GetRoute("Market/Index", true)
+        },
+        Discussion: {
+            ListPage: GetRoute("Market/Discussion/Index"),
+            DetailPage: GetRoute("Market/Discussion/Detail"),
+            MyPage: GetRoute("Market/Discussion/MyThreads")
+        },
+        Demand: {
+            ListPage: GetRoute("Market/Demand/Index"),
+            DetailPage: GetRoute("Market/Demand/Detail"),
+            MyDemandPage: GetRoute("Market/Demand/MyDemands"),
+            MyProposalPage: GetRoute("Market/Demand/Proposals")
+        },
+        Supplier: {
+            ListPage: GetRoute("Market/Supplier/Index"),
+            DetailPage: GetRoute("Market/Supplier/Detail"),
+            ServicePage: GetRoute("Market/Supplier/Service"),
+            MyOrdersPage: GetRoute("Market/Supplier/MyOrders"),
+            MyOffersPage: GetRoute("Market/Supplier/MyOffers"),
+            OrderPage: GetRoute("Market/Supplier/Order")
+        },
+        Template: {
+            ListPage: GetRoute("Market/Template/Index")
+        },
+        Hardware: {
+            ListPage: GetRoute("Market/Hardware/Index")
+        },
+        App: {
+            ListPage: GetRoute("Market/App/Index")
         },
         Get: function(PageRoute, params) {
 

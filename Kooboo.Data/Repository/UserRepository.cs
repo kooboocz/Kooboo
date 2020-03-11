@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using System;
 using System.Collections.Generic;
 using Kooboo.Lib.Helper;
@@ -38,6 +40,20 @@ namespace Kooboo.Data.Repository
             user.IsAdmin = GlobalDb.Users.IsAdmin(user.CurrentOrgId, user.Id);
             AddOrUpdateCache(user, Overwrite);
             AddOrUpdateLocal(user, Overwrite);
+        }
+
+
+        public bool RemoveLocal(Guid UserId)
+        {
+            if (Cache.ContainsKey(UserId))
+            {
+                Cache.Remove(UserId);
+            }
+
+            GlobalDb.LocalUser.Delete(UserId);
+
+            return true;
+
         }
 
         public void AddOrUpdateCache(User user, bool overwrite = false)
@@ -85,6 +101,10 @@ namespace Kooboo.Data.Repository
 
         public User Get(Guid id)
         {
+            if (!Kooboo.Data.Service.UserLoginService.IsAllow(id))
+            {
+                return null;
+            }
 
             if (this.Cache.ContainsKey(id))
             {
@@ -92,6 +112,15 @@ namespace Kooboo.Data.Repository
             }
 
             var user = GlobalDb.LocalUser.Get(id);
+
+            if (user == null)
+            {
+                user = Kooboo.Data.Service.UserLoginService.GetDefaultUser(id.ToString());
+                if (user != null)
+                {
+                    this.Cache[user.Id] = user;
+                }
+            }
 
             if (user == null)
             {
@@ -104,8 +133,8 @@ namespace Kooboo.Data.Repository
                 {
                     AddOrUpdateTemp(user);
                 }
-                return user;
             }
+
             return user;
         }
 
@@ -142,7 +171,7 @@ namespace Kooboo.Data.Repository
             }
             user = GlobalDb.LocalUser.Get(id);
 
-            if (user != null && user.PasswordHash != default(Guid) && user.CurrentOrgId != default(Guid))
+            if (user != null && (user.PasswordHash != default(Guid) || !string.IsNullOrWhiteSpace(user.Password)) && user.CurrentOrgId != default(Guid))
             {
                 return user;
             }
@@ -162,12 +191,35 @@ namespace Kooboo.Data.Repository
             return user;
         }
 
+        public bool IsDefaultUser(User user)
+        {
+            if (user == null || Data.AppSettings.DefaultUser == null || string.IsNullOrWhiteSpace(AppSettings.DefaultUser.UserName))
+            {
+                return false;
+            }
+            if (user.UserName.ToUpper() == Data.AppSettings.DefaultUser.UserName.ToUpper())
+            {
+                return true;
+            }
+            return false;
+        }
+
         public bool AddOrUpdate(User user)
         {
             User updateuser = Kooboo.Lib.Serializer.Copy.DeepCopy<User>(user);
 
             string userJson = Lib.Helper.JsonHelper.Serialize(updateuser);
-            var isSuccess = HttpHelper.Post<bool>(AddOrUpdateUserUrl, userJson);
+
+            bool isSuccess = false;
+            if (IsDefaultUser(user))
+            {
+                isSuccess = true;
+            }
+            else
+            {
+                isSuccess = HttpHelper.Post<bool>(AddOrUpdateUserUrl, userJson);
+            }
+
             if (isSuccess)
             {
                 AddOrUpdateTemp(user, true);
@@ -204,7 +256,7 @@ namespace Kooboo.Data.Repository
                     this.Cache[user.Id] = user;
                 }
                 GlobalDb.LocalUser.AddOrUpdate(user);
-                return true;       
+                return true;
             }
 
             return false;
@@ -216,6 +268,12 @@ namespace Kooboo.Data.Repository
             {
                 return null;
             }
+
+            if (!Kooboo.Data.Service.UserLoginService.IsAllow(username))
+            {
+                return null;
+            }
+
             Dictionary<String, string> para = new Dictionary<string, string>();
             para.Add("UserName", username);
             para.Add("Password", password);
@@ -226,7 +284,7 @@ namespace Kooboo.Data.Repository
             if (this.Cache.ContainsKey(userid) && !Data.AppSettings.IsOnlineServer)
             {
                 var cacheuser = this.Cache[userid];
-                if (cacheuser.Password != null && cacheuser.Password == password)
+                if (cacheuser.Password != null && Kooboo.Data.Service.UserLoginService.IsValidPassword(cacheuser, password))
                 {
                     return cacheuser;
                 }
@@ -244,9 +302,15 @@ namespace Kooboo.Data.Repository
                 {
                     user = GlobalDb.LocalUser.Get(username);
                 }
+
+                if (user == null || string.IsNullOrWhiteSpace(user.Password))
+                {
+                    user = Kooboo.Data.Service.UserLoginService.GetDefaultUser(username);
+                }
+
                 if (user != null)
                 {
-                    if (user.Password != null && user.Password == password)
+                    if (user.Password != null && Kooboo.Data.Service.UserLoginService.IsValidPassword(user, password))
                     {
                         return user;
                     }
@@ -308,7 +372,6 @@ namespace Kooboo.Data.Repository
                     var olduser = this.Cache[user.Id];
                     olduser.CurrentOrgId = user.CurrentOrgId;
                     olduser.CurrentOrgName = user.CurrentOrgName;
-                    olduser.CurrentHostDomain = user.CurrentHostDomain;
                     olduser.IsAdmin = GlobalDb.Users.IsAdmin(user.CurrentOrgId, user.Id);
                 }
 
@@ -317,7 +380,6 @@ namespace Kooboo.Data.Repository
                 {
                     local.CurrentOrgId = user.CurrentOrgId;
                     local.CurrentOrgName = user.CurrentOrgName;
-                    local.CurrentHostDomain = user.CurrentHostDomain;
                     local.IsAdmin = GlobalDb.Users.IsAdmin(user.CurrentOrgId, user.Id);
                     GlobalDb.LocalUser.AddOrUpdate(local);
                 }
@@ -410,8 +472,7 @@ namespace Kooboo.Data.Repository
             Dictionary<string, string> para = new Dictionary<string, string>();
             para.Add("Token", Token.ToString());
             para.Add("newpasspord", newpasspord);
-            return HttpHelper.Get<bool>(this.ResetPasswordUrl, para);
+            return HttpHelper.Post<bool>(this.ResetPasswordUrl, para);
         }
-
     }
 }

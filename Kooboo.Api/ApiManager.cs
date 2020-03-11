@@ -1,9 +1,11 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
 using Kooboo.Api.ApiResponse;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kooboo.Data.Language;
+using Kooboo.Data.Context;
 
 namespace Kooboo.Api
 {
@@ -11,15 +13,19 @@ namespace Kooboo.Api
     {
         public static IResponse Execute(ApiCall call, IApiProvider apiProvider)
         {
+            ApiMethod apimethod = null;
+
             var apiobject = apiProvider.Get(call.Command.ObjectType);
-            if (apiobject == null)
+
+            if (apiobject != null)
             {
-                var result = new JsonResponse() { Success = false };
-                result.Messages.Add(Hardcoded.GetValue("Object type Not Found", call.Context));
-                return result;
+                apimethod = Methods.ApiMethodManager.Get(apiobject, call.Command.Method);
             }
 
-            var apimethod = Methods.ApiMethodManager.Get(apiobject, call.Command.Method);
+            if (apimethod == null && apiProvider.GetMethod != null)
+            {
+                apimethod = apiProvider.GetMethod(call);
+            }
 
             if (apimethod == null)
             {
@@ -28,18 +34,32 @@ namespace Kooboo.Api
                 return result;
             }
 
+            // check permission
+            if (apiProvider.CheckAccess != null)
+            {
+                if (!apiProvider.CheckAccess(call.Context, apimethod))
+                {
+                    var result = new JsonResponse() { Success = false };
+                    result.Messages.Add(Hardcoded.GetValue("Unauthorized access", call.Context));
+                    return result;
+                }
+            }
+
             if (call.IsFake)
             {
                 var fakedata = Lib.Development.FakeData.GetFakeValue(apimethod.ReturnType);
                 return new JsonResponse(fakedata) { Success = true };
             }
-
-            if (!ValidateRequirement(call.Command, call.Context.WebSite, call.Context.User, apiProvider))
+            if (apiobject != null)
             {
-                var result = new JsonResponse() { Success = false };
-                result.Messages.Add(Hardcoded.GetValue("User or website not valid", call.Context));
-                return result;
+                if (!ValidateRequirement(call.Command, call.Context, apiProvider))
+                {
+                    var result = new JsonResponse() { Success = false };
+                    result.Messages.Add(Hardcoded.GetValue("User or website not valid", call.Context));
+                    return result;
+                }
             }
+
             List<string> errors = new List<string>();
             if (!ValideAssignModel(apimethod, call, errors.Add))
             {
@@ -53,8 +73,7 @@ namespace Kooboo.Api
                 var result = new JsonResponse() { Success = false };
                 result.Messages.AddRange(errors);
                 return result;
-            }
-
+            } 
             try
             {
                 return ExecuteMethod(call, apimethod);
@@ -64,10 +83,10 @@ namespace Kooboo.Api
                 var result = new JsonResponse() { Success = false };
                 result.Messages.Add(ex.Message);
 
-                Kooboo.Data.Log.ExceptionLog.Write(ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.Source);
+                Kooboo.Data.Log.Instance.Exception.WriteException(ex);  
 
                 return result;
-            } 
+            }
         }
 
         private static IResponse ExecuteMethod(ApiCall call, ApiMethod apimethod)
@@ -99,7 +118,7 @@ namespace Kooboo.Api
 
             if (response is IResponse)
             {
-                return response as IResponse; 
+                return response as IResponse;
                 //TODO: set the response message to multiple lingual. 
             }
             else
@@ -108,7 +127,8 @@ namespace Kooboo.Api
             }
         }
 
-        public static bool ValidateRequirement(ApiCommand command, WebSite WebSite, User User, IApiProvider apiProvider)
+
+        public static bool ValidateRequirement(ApiCommand command, RenderContext context, IApiProvider apiProvider)
         {
             if (command == null)
             {
@@ -121,26 +141,37 @@ namespace Kooboo.Api
                 return false;
             }
 
-            if (apiobject.RequireSite && WebSite == null)
+            if (apiobject.RequireSite && context.WebSite == null)
             {
                 return false;
             }
 
-            if (apiobject.RequireUser && User == null)
+            if (apiobject.RequireUser && context.User == null)
             {
                 return false;
             }
 
             if (apiobject.RequireSite && apiobject.RequireUser)
             {
-                if (WebSite.OrganizationId != User.CurrentOrgId)
+                if (context.WebSite.OrganizationId != context.User.CurrentOrgId)
                 {
                     return false;
                 }
             }
 
+
+            if (apiobject is ISecureApi)
+            {
+                var secureobj = apiobject as ISecureApi;
+                if (secureobj != null)
+                {
+                    return secureobj.AccessCheck(command, context);
+                }
+            }
+
             return true;
         }
+
 
         public static bool ValideAssignModel(ApiMethod method, ApiCall call, Action<string> callback)
         {
@@ -197,7 +228,6 @@ namespace Kooboo.Api
                         }
                     }
                 }
-
             }
             return IsSuccess;
         }

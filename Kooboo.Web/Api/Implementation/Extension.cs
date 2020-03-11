@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Data;
 using Kooboo.Data.Interface;
 using Kooboo.Data.Models;
@@ -44,7 +46,6 @@ namespace Kooboo.Web.Api.Implementation
         public List<Data.Models.Dll> List(ApiCall call)
         {
             return Kooboo.Data.GlobalDb.Dlls.All().OrderBy(o => o.AssemblyName).ToList();
-
         }
         
         public List<Dll> Post(ApiCall call)
@@ -178,8 +179,7 @@ namespace Kooboo.Web.Api.Implementation
 
             return tree;
         }
-
- 
+        
         public static TypeTree CreateSubTree(List<Type> types, TypeTree root = null)
         {
             if (root == null)

@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Interface;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Interface;
 using Kooboo.Data.Models;
 using Kooboo.Events.Cms;
 using Kooboo.Sites.Extensions;
@@ -11,6 +13,7 @@ using System.Threading.Tasks;
 using Kooboo.Sites.Models;
 using Kooboo.Sites.Contents.Models;
 using Kooboo.Sites.Routing;
+using Kooboo.Sites.Authorization.Model;
 
 namespace Kooboo.Sites.Cache
 {
@@ -83,6 +86,16 @@ namespace Kooboo.Sites.Cache
             return result;
         }
 
+        public static void SetNull(Guid SiteId)
+        {
+            _SiteDbs[SiteId] = null;   
+        }
+
+        public static void RemoveNull(Guid SiteId)
+        {
+            _SiteDbs.Remove(SiteId); 
+        }
+
         public static void Remove(SiteDb sitedb)
         {
             Cache.RenderPlan.RemoveSiteDb(sitedb.Id);
@@ -96,11 +109,28 @@ namespace Kooboo.Sites.Cache
             Cache.SiteObjectCache<SyncSetting>.RemoveSiteDb(sitedb.Id);
             Cache.SiteObjectCache<ContentFolder>.RemoveSiteDb(sitedb.Id);
             Cache.SiteObjectCache<ContentType>.RemoveSiteDb(sitedb.Id);
-            Cache.SiteObjectCache<Page>.RemoveSiteDb(sitedb.Id);
+
+            Cache.SiteObjectCache<ContentCategory>.RemoveSiteDb(sitedb.Id);
+            Cache.SiteObjectCache<SiteCluster>.RemoveSiteDb(sitedb.Id);
+            Cache.SiteObjectCache<KConfig>.RemoveSiteDb(sitedb.Id);
+            Cache.SiteObjectCache<Code>.RemoveSiteDb(sitedb.Id);
+
+
+
+            //    || TValueType == typeof(ContentCategory)
+            //    || TValueType == typeof(SiteCluster)
+            //    || TValueType == typeof(Code)
+            //    || TValueType == typeof(KConfig)
+
+
+            Cache.SiteObjectCache<Page>.RemoveSiteDb(sitedb.Id);  
             Cache.SiteObjectCache<Route>.RemoveSiteDb(sitedb.Id);
             Cache.SiteObjectCache<HtmlBlock>.RemoveSiteDb(sitedb.Id);
             Cache.SiteObjectCache<Style>.RemoveSiteDb(sitedb.Id);
             Cache.SiteObjectCache<Script>.RemoveSiteDb(sitedb.Id);
+            Cache.SiteObjectCache<Image>.RemoveSiteDb(sitedb.Id); 
+             
+
             _SiteDbs.Remove(sitedb.WebSite.Id);
         }
 
@@ -119,19 +149,22 @@ namespace Kooboo.Sites.Cache
                 || TValueType == typeof(ContentCategory)
                 || TValueType == typeof(SiteCluster)
                 || TValueType == typeof(Code)
+                || TValueType == typeof(KConfig)
+                || TValueType == typeof(TableRelation)
+                || TValueType == typeof(RolePermission)
+                || TValueType == typeof(SiteUser)
                 )
             {
                 return true;
             }
 
-            if (!Kooboo.Data.AppSettings.Global.IsOnlineServer)
+            if (!Kooboo.Data.AppSettings.IsOnlineServer)
             {
                 if (TValueType == typeof(Page)
               || TValueType == typeof(HtmlBlock)
               || TValueType == typeof(Style)
               || TValueType == typeof(Script)
               || TValueType == typeof(Image)
-               || TValueType == typeof(Code)
                )
                 {
                     return true;

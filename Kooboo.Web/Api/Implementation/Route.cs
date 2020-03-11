@@ -1,4 +1,6 @@
-﻿using Kooboo.Api; 
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api; 
 using Kooboo.Sites.Extensions; 
 using Kooboo.Sites.Routing;
 using Kooboo.Web.ViewModel; 
@@ -20,7 +22,7 @@ namespace Kooboo.Web.Api.Implementation
                 RouteItemViewModel model = new RouteItemViewModel();
                 model.Id = item.Id;
                 model.Name = item.Name;
-                model.ResourceType = ConstObjectType.GetName(item.DestinationConstType);
+                model.ResourceType = ConstTypeContainer.GetName(item.DestinationConstType);
                 model.ObjectId = item.objectId;
 
                 model.LastModified = item.LastModified;

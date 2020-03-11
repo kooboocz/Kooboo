@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic; 
 using Kooboo.IndexedDB.ByteConverter;
 using Kooboo.IndexedDB.Btree.Comparer;
@@ -7,6 +9,20 @@ namespace Kooboo.IndexedDB
 {  
     public static class ObjectContainer
     {
+
+        private static GuidConverter _guidConverter; 
+        public static GuidConverter GuidConverter
+        {
+            get
+            {
+                if (_guidConverter == null)
+                {
+                    _guidConverter = new GuidConverter(); 
+                }
+                return _guidConverter; 
+            }
+        }
+
 
         private static Dictionary<Type, object> _ByteConverterList;
 

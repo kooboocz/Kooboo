@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
   
 namespace Kooboo.Data.Template
@@ -31,6 +33,18 @@ namespace Kooboo.Data.Template
         public string Description { get; set; }
 
         public string Tags { get; set; }
+
+        public decimal Price { get; set; } = 0;
+
+        public string Currency { get; set; } = "CNY";
+
+        public string Symbol
+        {
+            get
+            {
+                return Kooboo.Lib.Helper.CurrencyHelper.GetCurrencySymbol(Currency);
+            }
+        }
 
         public List<TemplateUserImages> Images { get; set; } = new List<TemplateUserImages>();
 
@@ -73,6 +87,18 @@ namespace Kooboo.Data.Template
                 return _bodyhash;
             }
             set { _bodyhash = value; }
+        }
+
+        public decimal Price { get; set; } = 0;
+
+        public string Currency { get; set; } = "CNY";
+
+        public string Symbol
+        {
+            get
+            {
+                return Kooboo.Lib.Helper.CurrencyHelper.GetCurrencySymbol(Currency);
+            }
         }
     }
 

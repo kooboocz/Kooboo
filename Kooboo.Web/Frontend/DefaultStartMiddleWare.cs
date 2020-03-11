@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Data.Server;
 using Kooboo.Render;
 using System;
@@ -43,6 +45,11 @@ namespace Kooboo.Web.Frontend
             if (context.Request.RelativeUrl == "/" || string.IsNullOrEmpty(context.Request.RelativeUrl))
             {
                 string relative = this.options.LoginPage; 
+
+                if (context.User !=null && !string.IsNullOrWhiteSpace(this.options.PageAfterLogin))
+                {
+                    relative = this.options.PageAfterLogin; 
+                }
 
                 if (relative.ToLower().StartsWith(this.options.StartPath))
                 {

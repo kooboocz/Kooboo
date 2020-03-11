@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB;
 using Kooboo.Sites.Ecommerce.Models;
 using Kooboo.Sites.Repository;
 using System;
@@ -12,7 +14,7 @@ namespace Kooboo.Sites.Ecommerce.Repository
   
     public class ProductTypeRepository : SiteRepositoryBase<ProductType>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {

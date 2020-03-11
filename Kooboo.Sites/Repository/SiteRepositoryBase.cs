@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved. 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kooboo.IndexedDB;
@@ -9,12 +11,13 @@ using Kooboo.Sites.Routing;
 using Kooboo.Events.Cms;
 using Kooboo.Data.Interface;
 using Kooboo.Lib.Helper;
+using System.Threading.Tasks;
 
 namespace Kooboo.Sites.Repository
 {
-    public class SiteRepositoryBase<TValue> : IRepository, IRepository<TValue> where TValue : class, ISiteObject
+    public class SiteRepositoryBase<TValue> : ISiteRepositoryBase, IRepository, IRepository<TValue> where TValue : class, ISiteObject
     {
-        private object _locker = new object();
+        protected object _locker = new object();
 
         private SiteDb _sitedb;
         public virtual SiteDb SiteDb
@@ -66,7 +69,7 @@ namespace Kooboo.Sites.Repository
             }
         }
 
-        internal void init()
+        public void init()
         {
 
             this.UseCache = Cache.WebSiteCache.EnableCache(this.WebSite, this.SiteObjectType);
@@ -110,7 +113,7 @@ namespace Kooboo.Sites.Repository
             }
         }
 
-        internal virtual ObjectStoreParameters StoreParameters
+        public virtual ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -158,7 +161,7 @@ namespace Kooboo.Sites.Repository
                 return _store;
             }
         }
-
+          
         public virtual bool AddOrUpdate(TValue value, Guid UserId)
         {
             lock (_locker)
@@ -183,7 +186,7 @@ namespace Kooboo.Sites.Repository
                         RaiseEvent(value, ChangeType.Update, old);
                         return true;
                     }
-                }    
+                }
                 return false;
             }
         }
@@ -245,6 +248,35 @@ namespace Kooboo.Sites.Repository
             return result;
         }
 
+
+        public virtual async Task<TValue> GetAsync(Guid id)
+        {
+            TValue result;
+            if (this.UseCache)
+            {
+                result = Cache.SiteObjectCache<TValue>.Get(this.SiteDb, id);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+      
+            result = await Store.getAsync(id);
+           
+
+            if (result != null)
+            {
+                if (this.UseCache)
+                {
+                    Cache.SiteObjectCache<TValue>.AddOrUpdate(this.SiteDb, result);
+                }
+            }
+
+            return result;
+        }
+
+
         public virtual TValue GetFromCache(Guid id)
         {
             TValue result;
@@ -299,7 +331,7 @@ namespace Kooboo.Sites.Repository
 
             if (!parseok)
             {
-                byte consttype = Service.ConstTypeService.GetConstType(typeof(TValue));
+                byte consttype = ConstTypeContainer.GetConstType(typeof(TValue));
 
                 key = Data.IDGenerator.Generate(NameOrGuid, consttype);
             }
@@ -363,7 +395,7 @@ namespace Kooboo.Sites.Repository
 
         public virtual List<TValue> All()
         {
-            return All(false); 
+            return All(false);
         }
 
         /// <summary>
@@ -480,13 +512,13 @@ namespace Kooboo.Sites.Repository
         {
             if (this.SiteObjectType == typeof(Page))
             {
-                var maxpages = Kooboo.Data.Authorization.QuotaControl.MaxPages(this.SiteDb.WebSite.OrganizationId); 
-               if (maxpages != int.MaxValue)
+                var maxpages = Kooboo.Data.Infrastructure.InfraManager.instance.MaxPages(this.SiteDb.WebSite.OrganizationId);
+                if (maxpages != int.MaxValue)
                 {
-                    var count = this.SiteDb.Pages.Count(); 
+                    var count = this.SiteDb.Pages.Count();
                     if (count >= maxpages)
                     {
-                        throw new Exception(Kooboo.Data.Language.Hardcoded.GetValue("Max number of pages per site has been reached, service level upgrade required")); 
+                        throw new Exception(Kooboo.Data.Language.Hardcoded.GetValue("Max number of pages per site has been reached, service level upgrade required"));
                     }
                 }
             }
@@ -518,6 +550,43 @@ namespace Kooboo.Sites.Repository
                 }
             }
 
+            if (value is Kooboo.Sites.Models.CoreObject && changetype != ChangeType.Delete)
+            {
+                if (value is Kooboo.Sites.Routing.Route)
+                {
+                    return;
+                }
+
+                var size = Kooboo.Sites.Service.ObjectService.GetSize(value);
+
+                if (!Kooboo.Data.Infrastructure.InfraManager.Test(this.WebSite.OrganizationId, Data.Infrastructure.InfraType.Disk, size))
+                {
+                    var message = Data.Language.Hardcoded.GetValue("Over Disk Quota");
+                    throw new Exception(message);
+                }
+                else
+                {
+
+                    string msg = ConstTypeContainer.GetName(value.ConstType);
+
+                    var objinfo = Kooboo.Sites.Service.ObjectService.GetObjectInfo(this.SiteDb, value);
+
+
+                    if (objinfo != null)
+                    {
+                        msg += "| " + objinfo.DisplayName;
+                    }
+                    else
+                    {
+                        msg += "| " + value.Name;
+                    }
+
+                    Kooboo.Data.Infrastructure.InfraManager.Add(this.WebSite.OrganizationId, Data.Infrastructure.InfraType.Disk, size, msg);
+
+                }
+
+            }
+
         }
 
         /// <summary>
@@ -539,12 +608,14 @@ namespace Kooboo.Sites.Repository
                 core.Version = lastdeletelogid;
             }
 
-            var siteevent = new SiteObjectChangeEvent<TValue>
+            var siteevent = new SiteObjectEvent<TValue>
             {
                 Value = value,
                 ChangeType = changetype,
-                SiteDb = SiteDb
-            };        
+                SiteDb = SiteDb,
+                Store = this.Store
+            }; 
+
 
             if (changetype == ChangeType.Update)
             {
@@ -555,6 +626,8 @@ namespace Kooboo.Sites.Repository
             {
                 Sync.DiskSyncHelper.SyncToDisk(SiteDb, value, changetype, this.StoreName);
             }
+
+
 
             if (this.SiteDb.WebSite.EnableFullTextSearch)
             {
@@ -586,13 +659,12 @@ namespace Kooboo.Sites.Repository
                 {
                     Sites.Helper.ChangeHelper.DeleteRoutableObject(SiteDb, this, objectvalue);
                 }
-                Sites.Helper.ChangeHelper.DeleteComponentFromSource(SiteDb, objectvalue);
-       
+                Sites.Helper.ChangeHelper.DeleteComponentFromSource(SiteDb, objectvalue); 
             }
 
             Relation.RelationManager.Compute(siteevent);
 
-            CmsChangeHandler.HandleChange(siteevent);
+            Kooboo.Sites.Events.Handler.HandleChange(siteevent);
 
             Data.Events.EventBus.Raise(siteevent);
 
@@ -854,12 +926,21 @@ namespace Kooboo.Sites.Repository
 
                 var exclitem = new ExclLogItem();
                 exclitem.Id = key;
-                exclitem.Log = item;
-                result.Add(exclitem);
+                exclitem.Log = item; 
+
+                if (result.Find(o=>o.Id == key)==null)
+                { 
+                    result.Add(exclitem);
+                }
             }
 
             return result;
 
+        }
+
+        public void Reuild()
+        {
+            this.Store.OwnerDatabase.RebuildObjectStore<Guid, TValue>(this.Store, this.StoreParameters); 
         }
 
         public class ExclLogItem : IEquatable<ExclLogItem>
@@ -881,5 +962,13 @@ namespace Kooboo.Sites.Repository
 
         #endregion 
 
+    }
+
+    public interface ISiteRepositoryBase
+    {
+        SiteDb SiteDb { get; set; }
+        void init();
+
+        void Reuild(); 
     }
 }

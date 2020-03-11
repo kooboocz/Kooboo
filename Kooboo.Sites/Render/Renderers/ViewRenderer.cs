@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +13,7 @@ namespace Kooboo.Sites.Render
     /// </summary>
     class ViewRenderer
     {
-        public async static void Render(FrontContext context)
+        public async static Task Render(FrontContext context)
         {
           Components.ComponentSetting setting = new Components.ComponentSetting();  
             setting.TagName = "view";

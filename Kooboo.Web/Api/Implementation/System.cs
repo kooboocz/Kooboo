@@ -1,10 +1,10 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Sites.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq; 
 
 namespace Kooboo.Web.Api.Implementation
 {
@@ -30,7 +30,7 @@ namespace Kooboo.Web.Api.Implementation
         {
             get
             {
-                return true;
+                return false;
             }
         }
 
@@ -39,7 +39,7 @@ namespace Kooboo.Web.Api.Implementation
             Guid SiteId = call.GetValue<Guid>("SiteId");
 
             SystemVersion version = new SystemVersion();
-            version.Admin = Data.AppSettings.Version.ToString();  
+            version.Admin = Data.AppSettings.Version.ToString();
             version.SiteVersions = new Dictionary<Guid, string>();
 
             if (SiteId != default(Guid))
@@ -55,14 +55,17 @@ namespace Kooboo.Web.Api.Implementation
             }
             else
             {
-                var sites = Data.GlobalDb.WebSites.AllSites.Where(o => o.Value.OrganizationId == call.Context.User.CurrentOrgId).ToList();
+                if (call.Context.User != null)
+                { 
+                    var sites = Data.GlobalDb.WebSites.AllSites.Where(o => o.Value.OrganizationId == call.Context.User.CurrentOrgId).ToList();
 
-                foreach (var item in sites)
-                {
-                    var site = item.Value;
-                    var db = site.SiteDb();
-                    var last = db.Log.Store.LastKey;
-                    version.SiteVersions.Add(site.Id, last.ToString());
+                    foreach (var item in sites)
+                    {
+                        var site = item.Value;
+                        var db = site.SiteDb();
+                        var last = db.Log.Store.LastKey;
+                        version.SiteVersions.Add(site.Id, last.ToString());
+                    }
                 }
             }
             return version;
@@ -85,26 +88,47 @@ namespace Kooboo.Web.Api.Implementation
             return result;
         }
 
-  
+
         public string LoadOneJs(string url, ApiCall call)
-        {    
-            return GetString(url); 
+        {
+            return GetString(url);
         }
 
         private string GetString(string url)
         {
             string root = Kooboo.Data.AppSettings.RootPath;
 
-            url = url.TrimStart('/');
-            string path = url.Replace("/", "\\");
-
-            string fullpath = System.IO.Path.Combine(root, path);
-
+            string fullpath = Lib.Compatible.CompatibleManager.Instance.System.CombinePath(root, url);
             if (System.IO.File.Exists(fullpath))
             {
                 return System.IO.File.ReadAllText(fullpath);
             }
             return null;
+        }
+
+        public Dictionary<string, string> Info()
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            var apires = Kooboo.Data.AppSettings.ApiResource;
+
+            if (apires != null)
+            {
+                result.Add("account", apires.AccountUrl);
+                result.Add("resource", apires.ThemeUrl);
+                result.Add("converter", apires.ConvertUrl);
+            }
+            else
+            {
+                result.Add("ApiResource", null);
+            }
+
+            if (Data.AppSettings.ServerSetting != null)
+            {
+                result.Add("setting", Lib.Helper.JsonHelper.Serialize(Data.AppSettings.ServerSetting));
+            }
+
+            return result;
         }
     }
 

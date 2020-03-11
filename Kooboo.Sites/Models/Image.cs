@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using Kooboo.Extensions;
 using System.Security.Cryptography;
 using Kooboo.Data.Interface;
@@ -13,7 +15,6 @@ namespace Kooboo.Sites.Models
         {
             this.ConstType = ConstObjectType.Image;
         }
-
         private Guid _id;
 
         public override Guid Id
@@ -49,7 +50,7 @@ namespace Kooboo.Sites.Models
                 }
                 return false;
             }
-             
+
         }
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace Kooboo.Sites.Models
         public int Height
         {
             get; set;
-        } 
+        }
 
         public int Width
         {
@@ -93,7 +94,6 @@ namespace Kooboo.Sites.Models
             }
         }
 
-
         /// <summary>
         /// the content bytes of this file. 
         /// </summary>
@@ -103,15 +103,29 @@ namespace Kooboo.Sites.Models
             get; set;
         }
 
+        [Kooboo.IndexedDB.CustomAttributes.KoobooIgnore]
+        public byte[] Bytes
+        {
+            get
+            {
+                return ContentBytes;
+            }
+            set
+            {
+                ContentBytes = value;
+            }
+        }
+
+
         public void ResetSize()
         {
             if (this.ContentBytes != null)
             {
                 var size = Lib.Utilities.CalculateUtility.GetImageSize(this.ContentBytes);
                 this.Height = size.Height;
-                this.Width = size.Width; 
+                this.Width = size.Width;
                 this.Size = this.ContentBytes.Length;
-            } 
+            }
         }
 
         public override int GetHashCode()

@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB;
 using Kooboo.Sites.Contents;
 using Kooboo.Sites.Ecommerce.Models;
 using Kooboo.Sites.Ecommerce.ViewModel;
@@ -14,7 +16,7 @@ namespace Kooboo.Sites.Ecommerce.Repository
 
     public class ProductRepository : SiteRepositoryBase<Product>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -45,8 +47,8 @@ namespace Kooboo.Sites.Ecommerce.Repository
         {
             if (product != null)
             {
-                var prop = this.SiteDb.ProductType.GetColumns(product.ProductTypeId);
-                return Helper.ProductHelper.ToView(product, lang, prop);
+                var prop = this.SiteDb.GetSiteRepository<ProductTypeRepository>().GetColumns(product.ProductTypeId);
+                return new ProductViewModel(product, lang, prop);
             }
             return null;
         }
@@ -236,19 +238,21 @@ namespace Kooboo.Sites.Ecommerce.Repository
                 item.Id = default(Guid); // reset id. 
             }
 
-            var old = this.SiteDb.ProductVariants.ListByProductId(ProductId);
+            var repo = this.SiteDb.GetSiteRepository<ProductVariantsRepository>(); 
+
+            var old = repo.ListByProductId(ProductId);
 
             foreach (var item in old)
             {
                 if (variants.Find(o=>o.Id == item.Id) == null)
                 {
-                    this.SiteDb.ProductVariants.Delete(item.Id); 
+                    repo.Delete(item.Id); 
                 }
             }
 
             foreach (var item in variants)
             {
-                this.SiteDb.ProductVariants.AddOrUpdate(item); 
+                repo.AddOrUpdate(item); 
             }       
 
         }
@@ -258,19 +262,19 @@ namespace Kooboo.Sites.Ecommerce.Repository
         {                                                  
             var allcats = GetAllSubCats(CategoryId).ToList();
 
-            var allproductcats = this.SiteDb.ProductCategory.List();
+            var allproductcats = this.SiteDb.GetSiteRepository<ProductCategoryRepository>().List();
 
 
             var allproductids = allproductcats.Where(o => allcats.Contains(o.CategoryId)).Select(o=>o.ProductId).ToList();
 
-            return this.SiteDb.Product.Query.WhereIn<Guid>(o => o.Id, allproductids.ToList()).SelectAll(); 
+            return this.Query.WhereIn<Guid>(o => o.Id, allproductids.ToList()).SelectAll(); 
          
         }
 
         private HashSet<Guid> GetAllSubCats(Guid Id)
         {
             HashSet<Guid> result = new HashSet<Guid>();
-            var all = this.SiteDb.Category.All();
+            var all = this.SiteDb.GetSiteRepository<CategoryRepository>().All();
             result.Add(Id);
             SetSubs(all, Id, ref result);
             return result;

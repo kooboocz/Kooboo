@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,6 +29,7 @@ namespace Kooboo.Upgrade
         static void Main(string[] args)
         {
             Console.WriteLine("Upgrade in progress, please stand by...");
+
             DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_BYCOMMAND);
 
             UpgradeHelper.Upgrade();
@@ -34,8 +37,6 @@ namespace Kooboo.Upgrade
             Console.WriteLine("Upgrade Done!");
 
             UpgradeHelper.OpenKoobooApp();  
-        }
-        
-       
+        }  
     }
 }

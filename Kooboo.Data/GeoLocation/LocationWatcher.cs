@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Device.Location;
 using System.Linq;
@@ -36,10 +38,10 @@ namespace Kooboo.Data.GeoLocation
 
             var location = GlobalDb.GlobalSetting.GetByName(GlobalSettingLocationKey);
 
-            if (location != null && location.KeyValues.ContainsKey("latitude") && location.KeyValues.ContainsKey("longitude"))
+            if (location != null && location.HasKey("latitude") && location.HasKey("longitude"))
             {
-                string strla = location.KeyValues["latitude"];
-                string strlong = location.KeyValues["longitude"];
+                string strla = location.GetValue("latitude");
+                string strlong = location.GetValue("longitude");
                 if (!string.IsNullOrEmpty(strla) && !string.IsNullOrEmpty(strlong))
                 {
                     double la = 0;

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -101,6 +103,10 @@ namespace Kooboo.Sites.Diagnosis.Implementation
             if (fullurl.StartsWith("mailto:"))
             {
                 return false;
+            }
+            if (fullurl.StartsWith("javascript:"))
+            {
+                return false; 
             }
             if (fullurl.StartsWith("#"))
             {

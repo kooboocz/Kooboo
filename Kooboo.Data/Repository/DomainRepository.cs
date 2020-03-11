@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +14,8 @@ namespace Kooboo.Data.Repository
     public interface IDomainRepository
     {
         List<Domain> ListByUser(User user);
+
+        List<Domain> ListByOrg(Guid OrganizationId); 
 
         List<Domain> ListForEmail(User user);
 
@@ -130,19 +134,7 @@ namespace Kooboo.Data.Repository
             List<Domain> result = new List<Domain>();
 
             result.Add(new Domain() { Id = IDGenerator.GetDomainId(AppSettings.DefaultLocalHost), DomainName = AppSettings.DefaultLocalHost }); 
-             
-            //HashSet<string> alldomains = new HashSet<string>();
-
-            //alldomains.Add(AppSettings.DefaultLocalHost);
-
-            //var FromHostFile = LocalHostDomains(); 
-            //foreach (var item in FromHostFile)
-            //{
-            //    if (!item.Value.ToLower().EndsWith(AppSettings.DefaultLocalHost))
-            //    {
-            //        alldomains.Add(item.Value);
-            //    }
-            //}
+              
 
             var all = this.domainstore.All();
             foreach (var item in all.Where(o=>o.OrganizationId == user.CurrentOrgId))
@@ -190,6 +182,26 @@ namespace Kooboo.Data.Repository
             return this.domainstore.All().Where(o => o.OrganizationId == user.CurrentOrgId).ToList();
         }
 
+        public List<Domain> ListByOrg(Guid OrganizationId)
+        {
+
+            List<Domain> result = new List<Domain>();
+
+            result.Add(new Domain() { Id = IDGenerator.GetDomainId(AppSettings.DefaultLocalHost), DomainName = AppSettings.DefaultLocalHost });
+
+
+            var all = this.domainstore.All();
+            foreach (var item in all.Where(o => o.OrganizationId == OrganizationId))
+            {
+                if (!string.IsNullOrEmpty(item.DomainName) && !item.DomainName.ToLower().EndsWith(AppSettings.DefaultLocalHost))
+                {
+                    result.Add(item);
+
+                }
+            }
+
+            return result;
+        }
     }
                         
 

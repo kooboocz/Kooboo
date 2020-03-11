@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using Kooboo.Dom;
 using Kooboo.IndexedDB;
 using Kooboo.Lib.Helper;
@@ -11,7 +13,7 @@ namespace Kooboo.Sites.Repository
 {
     public class ScriptRepository : IEmbeddableRepositoryBase<Script>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using Kooboo.Extensions; 
 
 namespace Kooboo.Sites.Contents.Models
@@ -10,6 +12,8 @@ namespace Kooboo.Sites.Contents.Models
         {
             this.ConstType = ConstObjectType.ContentCategory;
         }
+         
+
         private Guid _id;
         [Kooboo.Attributes.SummaryIgnore]
         public override Guid Id

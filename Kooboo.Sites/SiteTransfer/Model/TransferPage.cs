@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using Kooboo.Lib.Helper;
 using Kooboo.Extensions; 
 
@@ -9,6 +11,11 @@ namespace Kooboo.Sites.SiteTransfer
     /// </summary>
     public class TransferPage  : Kooboo.Sites.Models.SiteObject
     {
+
+        public TransferPage()
+        {
+            this.ConstType = ConstObjectType.TransferPage;  
+        }
        
         private Guid _id; 
         public override Guid Id

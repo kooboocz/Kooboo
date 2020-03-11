@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Interface;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Interface;
 using Kooboo.IndexedDB;
 using Kooboo.IndexedDB.ByteConverter;
 using Kooboo.Sites.Models;
@@ -179,7 +181,7 @@ namespace Kooboo.Sites.Sync.SiteClusterSync
 
         internal void NotifyDns()
         {
-            if (Kooboo.Data.AppSettings.Global.IsOnlineServer)
+            if (Kooboo.Data.AppSettings.IsOnlineServer)
             {
 
             }
@@ -230,7 +232,7 @@ namespace Kooboo.Sites.Sync.SiteClusterSync
                     return item.Port;
                 }
             }
-            return Kooboo.Data.AppSettings.CurrentUsedPort;
+            return Kooboo.Data.AppSettings.HttpPort;
         }
 
         public SyncObject GetSyncObject(PushTask task)

@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB.Helper;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,6 +46,7 @@ namespace Kooboo.IndexedDB.Dynamic.Converter
                     converter.FieldNameHash = ObjectHelper.GetHashCode(item.Name);
 
                     converter.Length = item.Length;
+
                     converter.RelativePosition = item.relativePosition;
 
                     if (item.isComplex)

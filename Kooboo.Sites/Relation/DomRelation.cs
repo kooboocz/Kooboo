@@ -1,4 +1,6 @@
-﻿using Kooboo.Dom;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Dom;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,10 +51,11 @@ namespace Kooboo.Sites.Relation
 
                 computeLabel(dom, SiteDb, OwnerObjectId, OwnerConstType);
 
+                computekConfig(dom, SiteDb, OwnerObjectId, OwnerConstType);
+
                 ComputeComponent(dom, SiteDb, OwnerObjectId, OwnerConstType);
 
-                computeLayout(dom, SiteDb, OwnerObjectId, OwnerConstType);
-
+                computeLayout(dom, SiteDb, OwnerObjectId, OwnerConstType);      
             }
         }
 
@@ -167,9 +170,50 @@ namespace Kooboo.Sites.Relation
             foreach (var item in labelid)
             {
                 sitedb.Relations.AddOrUpdate(objectId, item, constType, ConstObjectType.Label);
+            }   
+        }
+
+
+        public static void computekConfig(Document dom, SiteDb sitedb, Guid objectId, byte constType)
+        {
+            List<Guid> configids = new List<Guid>();
+
+            List<Element> configitems = new List<Element>();
+         
+            var configtags = dom.getElementByAttribute("k-config").item;
+
+            configitems.AddRange(configtags);
+                                               
+            foreach (var item in configitems)
+            {
+                string key = item.getAttribute("k-config");
+                
+                if (string.IsNullOrEmpty(key))
+                {
+                    continue;
+                }
+                //var config = sitedb.KConfig.GetOrAdd(key, item.tagName, item.OuterHtml);
+                var config = sitedb.KConfig.GetOrAdd(key, item);
+
+                configids.Add(config.Id);
             }
 
+            var currentblockrelation = sitedb.Relations.GetRelations(objectId, ConstObjectType.Kconfig);
+
+            foreach (var item in currentblockrelation)
+            {
+                if (!configids.Contains(item.objectYId))
+                {
+                    sitedb.Relations.Delete(item.Id);
+                }
+            }
+            foreach (var item in configids)
+            {
+                sitedb.Relations.AddOrUpdate(objectId, item, constType, ConstObjectType.Kconfig);
+            }
         }
+
+
 
         public static void computeLayout(Document dom, SiteDb sitedb, Guid objectId, byte constType)
         {
@@ -663,7 +707,7 @@ namespace Kooboo.Sites.Relation
                 }
                 UrlList.Add(fileurl);
             }
-            ComputeUrlRelation(sitedb, objectId, constType, UrlList, ConstObjectType.File);
+            ComputeUrlRelation(sitedb, objectId, constType, UrlList, ConstObjectType.CmsFile);
         }
 
         public static void ComputeUrlRelation(SiteDb sitedb, Guid objectId, byte constType, List<string> urllist, byte DestConstType)

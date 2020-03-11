@@ -1,4 +1,6 @@
-﻿using Kooboo.Sites.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Models;
 using System;
 using System.Linq;
 using Kooboo.Web.ViewModel;
@@ -11,7 +13,7 @@ namespace Kooboo.Web.Api.Implementation
 {
     public class CodeApi : SiteObjectApi<Code>
     {
-        public CodeEditViewModel GetEdit(string codetype, ApiCall call)
+        public virtual CodeEditViewModel GetEdit(string codetype, ApiCall call)
         {
             var sitedb = call.WebSite.SiteDb();
             
@@ -148,11 +150,23 @@ namespace Kooboo.Web.Api.Implementation
             {
                 sample = @"//Schedule task"; 
             }
-              
+
+            else if (codetype == Sites.Models.CodeType.PaymentCallBack)
+            {
+                sample = @"// kscript that can be inserted to page position. 
+//k.cookie.set(""key"", ""value"");
+//k.response.write(""Hello world"");";
+            }
+            else if (codetype == Sites.Models.CodeType.Job)
+            {
+                sample = @"//Schedule task";
+            }
+
+
             return sample;
         }
 
-        public Guid Post(CodeEditViewModel model, ApiCall call)
+        public virtual Guid Post(CodeEditViewModel model, ApiCall call)
         {
             var sitedb = call.WebSite.SiteDb();
 
@@ -182,7 +196,25 @@ namespace Kooboo.Web.Api.Implementation
             {
                 if (!string.IsNullOrEmpty(model.Url) && !sitedb.Routes.Validate(model.Url, model.Id))
                 {
-                    throw new Exception(Data.Language.Hardcoded.GetValue("Url occupied", call.Context));
+                    // one more verify. 
+                    var route = sitedb.Routes.Get(model.Url); 
+                    if (route !=null && route.objectId != default(Guid))
+                    {
+                        var siteobjecttype = Kooboo.ConstTypeContainer.GetModelType(route.DestinationConstType); 
+                        if (siteobjecttype !=null)
+                        {
+                            var repo = sitedb.GetSiteRepositoryByModelType(siteobjecttype); 
+                            if (repo !=null)
+                            {
+                                var obj = repo.Get(route.objectId); 
+                                if (obj !=null)
+                                {
+                                    throw new Exception(Data.Language.Hardcoded.GetValue("Url occupied", call.Context));
+                                }
+                            }
+                        }
+                    } 
+                
                 }
 
                 // check if it only return Json... 
@@ -200,7 +232,15 @@ namespace Kooboo.Web.Api.Implementation
                     oldcode.Config = model.Config;
                     oldcode.IsJson = Lib.Helper.JsonHelper.IsJson(oldcode.Body);
 
-                    sitedb.Code.AddOrUpdate(oldcode);
+                    if (oldcode.IsEmbedded && oldcode.CodeType == Sites.Models.CodeType.PageScript)
+                    {
+                        sitedb.Code.AddOrUpdate(oldcode, true, true, call.Context.User.Id);
+                    }
+                    else
+                    {
+                        sitedb.Code.AddOrUpdate(oldcode, call.Context.User.Id);
+                    }
+                     
 
                     code.EventType = oldcode.EventType;
                     code.CodeType = oldcode.CodeType;
@@ -282,9 +322,11 @@ namespace Kooboo.Web.Api.Implementation
             return result;
         }
 
-        public List<CodeListItem> ListByType(string codetype, ApiCall call)
+        public virtual List<CodeListItem> ListByType(string codetype, ApiCall call)
         {
             var sitedb = call.WebSite.SiteDb();
+            string baseurl = call.WebSite.BaseUrl();
+
             List<CodeListItem> result = new List<CodeListItem>();
 
             List<Code> codes = null;
@@ -309,8 +351,7 @@ namespace Kooboo.Web.Api.Implementation
             {
                 CodeListItem model = new CodeListItem();
                 model.Id = item.Id;
-                model.Name = item.Name;
-
+                model.Name = item.Name;       
 
                 if (item.IsEmbedded)
                 {
@@ -326,9 +367,7 @@ namespace Kooboo.Web.Api.Implementation
                 model.LastModified = item.LastModified;
 
                 if (item.CodeType == Sites.Models.CodeType.Api)
-                {
-                    string baseurl = call.WebSite.BaseUrl();
-
+                {                  
                     var route = sitedb.Routes.GetByObjectId(item.Id);
                     if (route != null)
                     {
@@ -354,8 +393,7 @@ namespace Kooboo.Web.Api.Implementation
 
             return result;
         }
-
-
+                                                           
         public bool HasScriptTag(string body)
         {
             if (body.IndexOf("<script", StringComparison.OrdinalIgnoreCase) > -1)
@@ -371,13 +409,12 @@ namespace Kooboo.Web.Api.Implementation
             }
             return false;
         }
-
-
-        public List<IEmbeddableItemListViewModel> EmbeddedScripts(ApiCall apiCall)
+              
+        public virtual List<IEmbeddableItemListViewModel> EmbeddedScripts(ApiCall apiCall)
         {
             return apiCall.WebSite.SiteDb().Code.GetEmbeddeds()
             .Select(o => new IEmbeddableItemListViewModel(apiCall.WebSite.SiteDb(), o)).ToList();
-        }
+        }            
 
     }
 }

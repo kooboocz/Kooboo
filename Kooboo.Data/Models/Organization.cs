@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 
 namespace Kooboo.Data.Models
 {
@@ -36,21 +38,26 @@ namespace Kooboo.Data.Models
         public string DisplayName { get; set; }
 
         public Guid AdminUser { get; set; }
-
-        public decimal Balance { get; set; } = 0;
+         
 
         public int ServerId { get; set; }
 
         public int ServiceLevel { get; set; }
 
+        public string Introduction { get; set; }
+
+        // This is an user that belongs to one agency.. 
+        public Guid AgencyOrgId { get; set; }
+
         public bool IsBanned { get; set; }
 
         public override int GetHashCode()
         {
-            string unique = this.DisplayName + this.Balance.ToString();
+            string unique = this.DisplayName;
             unique += this.ServerId.ToString() + this.ServiceLevel.ToString();
-            unique += this.AdminUser.ToString() + this.IsBanned.ToString(); 
-
+            unique += this.AdminUser.ToString() + this.IsBanned.ToString();
+            unique += this.Introduction;
+            unique += this.AgencyOrgId.ToString(); 
             return Lib.Security.Hash.ComputeIntCaseSensitive(unique); 
         }
     }

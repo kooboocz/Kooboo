@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Attributes;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Kooboo.Sites.Contents.Models
@@ -31,6 +34,7 @@ namespace Kooboo.Sites.Contents.Models
             return Properties.FirstOrDefault(it => it.Name.Equals(propertyName, System.StringComparison.OrdinalIgnoreCase));
         }
 
+        [KIgnore]
         public override int GetHashCode()
         { 
             string unique = this.IsNested.ToString(); 

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,7 +36,16 @@ namespace Kooboo.Sites.ThreadPool
             ReleaseObject(store);
             return siteobject; 
         }
-          
+
+        public async Task<TValue> GetAsync(Guid id)
+        {
+            var store = GetAvailable();
+            var siteobject = await store.getAsync(id);
+            store.Close();
+            ReleaseObject(store);
+            return siteobject;
+        }
+
         private ObjectStore<Guid,TValue>  GetAvailable()
         {
             lock (Locker)

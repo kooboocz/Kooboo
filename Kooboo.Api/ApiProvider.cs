@@ -1,5 +1,8 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
+using Kooboo.Data.Context;
 
 namespace Kooboo.Api
 {
@@ -23,6 +26,8 @@ namespace Kooboo.Api
         }
 
         public string ApiPrefix { get; set; } = "/_api";
+        public Func<ApiCall, ApiMethod> GetMethod { get; set; }
+        public Func<RenderContext, ApiMethod, bool> CheckAccess { get; set; }
 
         public void Set(Type apitype)
         {

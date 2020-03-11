@@ -1,4 +1,6 @@
-﻿using Jint.Native;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Jint.Native;
 using Jint.Runtime.Environments;
 using Kooboo.Data.Context;
 using Kooboo.Data.Models;
@@ -9,13 +11,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Kooboo.Lib.Reflection;
-using Jint.Runtime;
-using Kooboo.Sites.Scripting.Global;
+using Jint.Runtime; 
+using KScript;
 
 namespace Kooboo.Sites.Scripting
 {
     public class Manager
     {
+        static Manager()
+        {
+            Jint.JintEngineHelper.AddTypeMapper();
+        }
 
         public static string DebuggerEngineName { get; set; } = "__kooboodebugger";
 
@@ -30,7 +36,7 @@ namespace Kooboo.Sites.Scripting
             return kcontext;
         }
 
-        public static Session GetOrSetSession(RenderContext context)
+        public static KScript.Session GetOrSetSession(RenderContext context)
         {
             var ksession = context.GetItem<Session>();
             if (ksession == null)
@@ -245,6 +251,7 @@ namespace Kooboo.Sites.Scripting
             try
             {
                 engine.Execute(JsCode);
+               
             }
             catch (Exception ex)
             {
@@ -305,6 +312,7 @@ namespace Kooboo.Sites.Scripting
             }
             return output;
         }
+         
 
         public static string ExecuteInnerScript(RenderContext context, string InnerJsCode)
         {
@@ -424,7 +432,7 @@ namespace Kooboo.Sites.Scripting
                     }
                 }
 
-                kcontext.config = config;
+                kcontext.config = new KDictionary(config);
                 kcontext.ReturnValues.Clear();
 
                 engine.Execute(code.Body);
@@ -434,8 +442,7 @@ namespace Kooboo.Sites.Scripting
                 if (kcontext.ReturnValues.Count > 0)
                 {
                     result = kcontext.ReturnValues.Last();
-                }
-
+                } 
             }
             catch (Exception ex)
             {
@@ -759,7 +766,7 @@ namespace Kooboo.Sites.Scripting
                 }
             }
 
-            else if (Lib.Reflection.TypeHelper.IsCollection(obj.GetType()))
+            else if (Lib.Reflection.TypeHelper.IsGenericCollection(obj.GetType()))
             {
                 return result;
             }
@@ -782,10 +789,8 @@ namespace Kooboo.Sites.Scripting
                     {
 
                     }
-                }
-
-                // TODO: also get the methods...
-
+                } 
+                // TODO: also get the methods... 
             }
 
             return result;
@@ -836,7 +841,7 @@ namespace Kooboo.Sites.Scripting
             }
             else
             {
-                bool isCol = TypeHelper.IsCollection(type);
+                bool isCol = TypeHelper.IsGenericCollection(type);
                 if (TypeHelper.IsDictionary(type))
                 {
                     isArray = false;

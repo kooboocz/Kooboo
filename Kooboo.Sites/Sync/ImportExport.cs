@@ -1,4 +1,6 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data;
 using Kooboo.Data.Interface;
 using Kooboo.Data.Models;
 using Kooboo.Lib.Helper;
@@ -25,19 +27,14 @@ namespace Kooboo.Sites.Sync
             //-Route, Image, Style, Script, menu, form, and then others. 
             InnerImportOrder.Add(typeof(Kooboo.Sites.Routing.Route).Name, 1);
             InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Image).Name, 2);
-            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Style).Name, 3);
-            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Script).Name, 4);
-            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Menu).Name, 5);
-            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Form).Name, 6);
+            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.View).Name, 3);
+            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Style).Name, 4);
+            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Script).Name, 5);
+            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Menu).Name, 6);
+            InnerImportOrder.Add(typeof(Kooboo.Sites.Models.Form).Name, 7);
         }
 
-        private static string KoobooSettingFileName { get; set; } = "kooboosetting.json";
-
-        private static string TableSettingFileName { get; set; } = "koobootablesetting.json";
-
-        private static string InterExtension { get; set; } = ".kbinary";
-
-        private static string BatchSettingFileName { get; set; } = "kooboobacth.kbbatch.config";
+        #region "NotUsedNow"
 
 
         public static string ExportSourceZip(SiteDb SiteDb)
@@ -72,7 +69,7 @@ namespace Kooboo.Sites.Sync
                     {
                         continue;
                     }
-                    newarchive.CreateEntryFromFile(path, path.Replace(DiskPath, "").Trim('\\'));
+                    newarchive.CreateEntryFromFile(path, path.Replace(DiskPath, "").Trim('\\').Trim('/'));
                 }
 
                 newarchive.Dispose();
@@ -97,7 +94,7 @@ namespace Kooboo.Sites.Sync
             SiteDb newdb = new SiteDb(new Data.Models.WebSite() { Name = "___temp" });
             newdb.DatabaseDb = DB.GetDatabase(DiskPath);
 
-            foreach (var repo in SiteDb.AllRepositories)
+            foreach (var repo in SiteDb.ActiveRepositories())
             {
                 var storename = repo.StoreName;
                 string lower = storename.ToLower();
@@ -122,20 +119,111 @@ namespace Kooboo.Sites.Sync
 
         private static bool SkipExport(string FilePath)
         {
-            if (FilePath.Contains("\\EventRules")
-                  || FilePath.Contains("\\_koobooeditlog")
-                  || FilePath.Contains("\\SyncSetting")
-                  || FilePath.Contains("\\Thumbnail")
-                  || FilePath.Contains("\\TransferPage")
-                  || FilePath.Contains("\\Synchronization")
-                //|| FilePath.Contains("\\TransferTask")
-                || FilePath.Contains("\\DownloadFailTrack")
+            var slash = Kooboo.Lib.Compatible.CompatibleManager.Instance.System.GetSlash();
+            if (FilePath.Contains(slash + "EventRules")
+                  || FilePath.Contains(slash + "_koobooeditlog")
+                  || FilePath.Contains(slash + "SyncSetting")
+                  || FilePath.Contains(slash + "Thumbnail")
+                  || FilePath.Contains(slash + "TransferPage")
+                  || FilePath.Contains(slash + "Synchronization")
+                //|| FilePath.Contains(slash+"TransferTask")
+                || FilePath.Contains(slash + "DownloadFailTrack")
                   )
             {
                 return true;
             }
             return false;
         }
+
+
+        public static List<string> FindCommonPath(List<string> paths)
+        {
+            Func<List<string>, bool> HasSameValue = (list) =>
+            {
+                string current = null;
+
+                foreach (var item in list)
+                {
+                    if (current == null)
+                    {
+                        current = item;
+                        if (current.ToLower().Contains("_kooboo"))
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        if (!Kooboo.Lib.Helper.StringHelper.IsSameValue(current, item))
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            };
+
+            Func<string, List<string>> ToSegments = Kooboo.Lib.Compatible.CompatibleManager.Instance.System.GetSegments; ; ;
+
+
+            if (paths == null || paths.Count() == 1)
+            {
+                return new List<string>();
+            }
+
+            List<List<string>> AllSegments = new List<List<string>>();
+
+            foreach (var item in paths)
+            {
+                AllSegments.Add(ToSegments(item));
+            }
+
+            List<string> common = new List<string>();
+
+            int i = 0;
+
+            while (i < 999)
+            {
+                List<string> indexitem = new List<string>();
+                foreach (var item in AllSegments)
+                {
+                    if (i > item.Count() - 1)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        indexitem.Add(item[i]);
+                    }
+                }
+                if (indexitem.Count() > 0 && HasSameValue(indexitem))
+                {
+                    common.Add(indexitem[0]);
+                    i += 1;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return common;
+
+        }
+
+
+
+        #endregion
+
+
+        private static string KoobooSettingFileName { get; set; } = "kooboosetting.json";
+
+        private static string TableSettingFileName { get; set; } = "koobootablesetting.json";
+
+        private static string InterExtension { get; set; } = ".kbinary";
+
+        private static string BatchSettingFileName { get; set; } = "kooboobacth.kbbatch.config";
+
 
         public static WebSite ImportZip(Stream zipFile, WebSite newsite, Guid UserId = default(Guid))
         {
@@ -168,29 +256,10 @@ namespace Kooboo.Sites.Sync
             return newsite;
         }
 
-
-
         public static WebSite ImportZip(Stream zipFile, Guid organizationId, string SiteName, string FullDomain, Guid UserId)
         {
             var newsite = Kooboo.Sites.Service.WebSiteService.AddNewSite(organizationId, SiteName, FullDomain, UserId);
             return ImportZip(zipFile, newsite, UserId);
-        }
-
-        public static bool IsKoobooSite(Stream zipFile)
-        {
-            bool iskooboo = false;
-            using (var archive = new ZipArchive(zipFile, ZipArchiveMode.Read))
-            {
-                if (archive.Entries.Count > 0)
-                {
-                    if (IsKoobooSite(archive))
-                    {
-                        iskooboo = true;
-                    }
-
-                }
-            }
-            return iskooboo;
         }
 
         public static bool IsKoobooSite(ZipArchive archive)
@@ -350,95 +419,6 @@ namespace Kooboo.Sites.Sync
             return siteDb.WebSite;
         }
 
-        public static List<string> FindCommonPath(List<string> paths)
-        {
-            Func<List<string>, bool> HasSameValue = (list) =>
-            {
-                string current = null;
-
-                foreach (var item in list)
-                {
-                    if (current == null)
-                    {
-                        current = item;
-                        if (current.ToLower().Contains("_kooboo"))
-                        {
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        if (!Kooboo.Lib.Helper.StringHelper.IsSameValue(current, item))
-                        {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            };
-
-            Func<string, List<string>> ToSegments = (input) =>
-            {
-                if (string.IsNullOrEmpty(input))
-                {
-                    return new List<string>();
-                }
-                input = input.Replace('/', '\\');
-                input = input.Trim();
-                if (input.StartsWith("\\"))
-                {
-                    input = input.Substring(1);
-                }
-                return input.Split('\\').ToList();
-
-            };
-
-
-            if (paths == null || paths.Count() == 1)
-            {
-                return new List<string>();
-            }
-
-            List<List<string>> AllSegments = new List<List<string>>();
-
-            foreach (var item in paths)
-            {
-                AllSegments.Add(ToSegments(item));
-            }
-
-            List<string> common = new List<string>();
-
-            int i = 0;
-
-            while (i < 999)
-            {
-                List<string> indexitem = new List<string>();
-                foreach (var item in AllSegments)
-                {
-                    if (i > item.Count() - 1)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        indexitem.Add(item[i]);
-                    }
-                }
-                if (indexitem.Count() > 0 && HasSameValue(indexitem))
-                {
-                    common.Add(indexitem[0]);
-                    i += 1;
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            return common;
-
-        }
-
         public static string ExportInter(SiteDb SiteDb)
         {
             string strguid = System.Guid.NewGuid().ToString();
@@ -458,7 +438,7 @@ namespace Kooboo.Sites.Sync
 
             foreach (var path in files)
             {
-                newarchive.CreateEntryFromFile(path, path.Replace(DiskPath, "").Trim('\\'));
+                newarchive.CreateEntryFromFile(path, path.Replace(DiskPath, "").Trim('\\').Trim('/'));
             }
 
             newarchive.Dispose();
@@ -487,14 +467,13 @@ namespace Kooboo.Sites.Sync
 
             foreach (var path in files)
             {
-                newarchive.CreateEntryFromFile(path, path.Replace(DiskPath, "").Trim('\\'));
+                newarchive.CreateEntryFromFile(path, path.Replace(DiskPath, "").Trim('\\').Trim('/'));
             }
 
             newarchive.Dispose();
             newstream.Dispose();
             return zipFile;
         }
-
 
         // copy as the intermediate format of Kooboo db... 
         public static string InterCopy(SiteDb SiteDb)
@@ -503,7 +482,7 @@ namespace Kooboo.Sites.Sync
             DiskPath = System.IO.Path.Combine(DiskPath, System.Guid.NewGuid().ToString());
             IOHelper.EnsureDirectoryExists(DiskPath);
 
-            foreach (var repo in SiteDb.AllRepositories)
+            foreach (var repo in SiteDb.ActiveRepositories())
             {
                 if (!Kooboo.Attributes.AttributeHelper.IsCoreObject(repo.ModelType))
                 {
@@ -527,7 +506,7 @@ namespace Kooboo.Sites.Sync
             }
 
             var setting = GetSiteSetting(SiteDb.WebSite);
-            var json = JsonHelper.Serialize(setting);
+            var json = JsonHelper.SerializeCaseSensitive(setting);
             string settingfile = System.IO.Path.Combine(DiskPath, KoobooSettingFileName);
             File.WriteAllText(settingfile, json);
 
@@ -540,7 +519,7 @@ namespace Kooboo.Sites.Sync
         {
             var db = Kooboo.Data.DB.GetKDatabase(website);
             var tablesetting = Kooboo.IndexedDB.Dynamic.Sync.GetTableSetting(db);
-            var json = JsonHelper.Serialize(tablesetting);
+            var json = JsonHelper.SerializeCaseSensitive(tablesetting);
 
             string settingfile = System.IO.Path.Combine(diskpath, TableSettingFileName);
             File.WriteAllText(settingfile, json);
@@ -561,7 +540,7 @@ namespace Kooboo.Sites.Sync
 
             foreach (var item in Tables)
             {
-                var table = db.GetOrCreateTable(item);
+                var table = Data.DB.GetOrCreateTable(db, item);
 
                 if (table != null)
                 {
@@ -573,7 +552,7 @@ namespace Kooboo.Sites.Sync
 
                     foreach (var data in all)
                     {
-                        var jsondata = Kooboo.Lib.Helper.JsonHelper.Serialize(data);
+                        var jsondata = Kooboo.Lib.Helper.JsonHelper.SerializeCaseSensitive(data);
 
                         if (data.ContainsKey("_id"))
                         {
@@ -599,23 +578,9 @@ namespace Kooboo.Sites.Sync
             string fileiopath = Lib.Helper.IOHelper.CombinePath(diskpath, "__fileio__");
 
             string currentPath = Kooboo.Data.AppSettings.GetFileIORoot(website);
-
-            var files = System.IO.Directory.GetFiles(currentPath);
-            foreach (var item in files)
-            {
-                string fullfilename = item;
-                var index = item.IndexOf(currentPath, StringComparison.OrdinalIgnoreCase);
-                if (index > -1)
-                {
-                    fullfilename = item.Substring(index + currentPath.Length + 1);
-                    if (!string.IsNullOrWhiteSpace(fullfilename))
-                    {
-                        string rightname = Lib.Helper.IOHelper.CombinePath(fileiopath, fullfilename);
-                        Lib.Helper.IOHelper.Copy(item, rightname);
-                    }
-                }
-            }
-        }
+             
+            Kooboo.Lib.Helper.IOHelper.DirectoryCopy(currentPath, fileiopath, true);  
+        } 
 
         public static string InterCopySelected(SiteDb SiteDb, List<string> StoretNames)
         {
@@ -748,8 +713,7 @@ namespace Kooboo.Sites.Sync
 
             return DiskPath;
         }
-
-        // TODO: 
+         
         public static string InterCopyTime(SiteDb SiteDb, Int64 timetick)
         {
             string DiskPath = Kooboo.Data.AppSettings.TempDataPath;
@@ -1029,7 +993,7 @@ namespace Kooboo.Sites.Sync
 
                     if (!string.IsNullOrEmpty(tablename))
                     {
-                        var table = kdatabase.GetOrCreateTable(tablename);
+                        var table = Data.DB.GetOrCreateTable(kdatabase, tablename);
 
                         foreach (var data in item.ToList())
                         {
@@ -1143,11 +1107,15 @@ namespace Kooboo.Sites.Sync
             setting.EnableECommerce = site.EnableECommerce;
             setting.EnableCache = site.EnableCache;
 
+            setting.IsApp = site.IsApp;
+            setting.SiteType = site.SiteType;
+
+
             return setting;
         }
 
         public static void SetSiteSetting(WebSite site, SiteSetting setting)
-        {             
+        {
             foreach (var item in setting.CustomErrors)
             {
                 site.CustomErrors[item.Key] = item.Value;
@@ -1196,16 +1164,18 @@ namespace Kooboo.Sites.Sync
                 site.Culture[item.Key] = item.Value;
             }
 
-            var notfoundculture = site.Culture.Where(o => !setting.Culture.ContainsKey(o.Key)).ToList(); 
+            var notfoundculture = site.Culture.Where(o => !setting.Culture.ContainsKey(o.Key)).ToList();
 
-            if (notfoundculture !=null)
+            if (notfoundculture != null)
             {
                 foreach (var item in notfoundculture)
                 {
                     site.Culture.Remove(item.Key);
                 }
             }
-            
+
+            site.IsApp = setting.IsApp;
+            site.SiteType = setting.SiteType;
 
             // site.KoobooVersion = setting.KoobooVersion; 
         }

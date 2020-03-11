@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Data.Interface;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Models;
@@ -22,7 +24,12 @@ namespace Kooboo.Web.Api.Implementation
                 {
                     var layout = layoutobject as Layout;
                     var layoutclone = layout.Clone<Layout>();
+
+
                     string basehrel = call.WebSite.BaseUrl();
+                    basehrel = Kooboo.Data.Service.WebSiteService.EnsureHttpsBaseUrlOnServer(basehrel, call.WebSite); 
+                     
+
                     if (!string.IsNullOrEmpty(basehrel))
                     {
                         layoutclone.Body = Sites.Service.HtmlHeadService.SetBaseHref(layoutclone.Body, basehrel);

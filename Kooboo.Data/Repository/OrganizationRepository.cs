@@ -1,63 +1,87 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using System;
 using System.Collections.Generic;
 using Kooboo.Lib.Helper;
+using Kooboo.Data.Helper;
 
 namespace Kooboo.Data.Repository
 {
     public class OrganizationRepository
     {
-        internal Dictionary<Guid, string> NameCache = new Dictionary<Guid, string>();
+        public Dictionary<Guid, string> NameCache = new Dictionary<Guid, string>();
 
-        public Organization Add(Organization org)
-        {
-            var json = Lib.Helper.JsonHelper.Serialize(org);
-            var neworg = HttpHelper.Post<Organization>(Account.Url.Org.Add, json);
 
-            if (!NameCache.ContainsKey(neworg.Id))
-            {
-                NameCache.Add(neworg.Id, neworg.Name);
-            }
-            else
-            {
-                if (NameCache[neworg.Id] != neworg.Name)
-                {
-                    NameCache[neworg.Id] = neworg.Name;
-                }
-            }
-            return neworg;
-        }
+        private Dictionary<Guid, Organization> Cache = new Dictionary<Guid, Organization>();
 
-        public bool Update(Organization org)
-        {
-            if (!NameCache.ContainsKey(org.Id))
-            {
-                NameCache.Add(org.Id, org.Name);
-            }
-            else
-            {
-                if (NameCache[org.Id] != org.Name)
-                {
-                    NameCache[org.Id] = org.Name;
-                }
-            }
-            var json = Lib.Helper.JsonHelper.Serialize(org);
-            return HttpHelper.Post<bool>(Account.Url.Org.Update, json);
-        }
+        public Dictionary<Guid, DateTime> lastfail = new Dictionary<Guid, DateTime>();
 
-        public bool Delete(Guid id)
-        {
-            Dictionary<string, string> para = new Dictionary<string, string>();
-            para.Add("id", id.ToString());
-            var paramStr = Lib.Helper.JsonHelper.Serialize(para);
-            return HttpHelper.Post<bool>(Account.Url.Org.Delete, paramStr);
-        }
+        // if failed for 5 times, not get any more.  
 
         public Organization Get(Guid id)
         {
+            var org = GetFromLocal(id); 
+              
+            if (org == null)
+            {
+                org = GetFromAccount(id);
+                if (org != null)
+                {
+                    AddOrUpdateLocal(org);
+                }
+            } 
+            return org;
+        }
+         
+        public Organization GetFromLocal(Guid id)
+        {
+            if (this.Cache.ContainsKey(id))
+            {
+                return this.Cache[id];
+            }
+
+            var org = GlobalDb.LocalOrganization.Get(id);
+
+            if (org != null)
+            { 
+                Cache[id] = org;
+                return org; 
+            } 
+            return null;
+        }
+
+
+        public Organization GetFromAccount(Guid id)
+        {
+            if (lastfail.ContainsKey(id))
+            {
+                var lasttime = lastfail[id];
+                if (lasttime > DateTime.Now.AddHours(-4))
+                {
+                    return null;
+                }
+            }
+
             Dictionary<string, string> para = new Dictionary<string, string>();
             para.Add("id", id.ToString());
-            return HttpHelper.Post<Organization>(Account.Url.Org.GetUrl, para);
+            var org = HttpHelper.Post<Organization>(AccountUrlHelper.Org("get"), para);
+
+            if (org == null)
+            {
+                // try one more time. 
+                org = HttpHelper.Post<Organization>(AccountUrlHelper.Org("get"), para);
+            }
+
+            if (org != null)
+            {
+                return org;
+            }
+            else
+            {
+                lastfail[id] = DateTime.Now;
+                return null;
+            }
         }
 
         public Organization GetByUser(Guid UserId)
@@ -71,7 +95,7 @@ namespace Kooboo.Data.Repository
         {
             Dictionary<string, string> para = new Dictionary<string, string>();
             para.Add("organizationId", organizationId.ToString());
-            return HttpHelper.Post<List<User>>(Account.Url.Org.Users, para);
+            return HttpHelper.Post<List<User>>(AccountUrlHelper.Org("Users"), para);
         }
 
         public string AddUser(string userName, Guid organizationId)
@@ -79,7 +103,12 @@ namespace Kooboo.Data.Repository
             Dictionary<string, string> para = new Dictionary<string, string>();
             para.Add("organizationId", organizationId.ToString());
             para.Add("userName", userName);
-            return HttpHelper.Post<string>(Account.Url.Org.AddUser, para);
+            var result = HttpHelper.Post<string>(AccountUrlHelper.Org("adduser"), para);
+
+            var userid = Lib.Security.Hash.ComputeGuidIgnoreCase(userName);
+            Kooboo.Data.Cache.OrganizationUserCache.AddUser(organizationId, userid);
+
+            return result;
         }
 
         public bool DeleteUser(string userName, Guid organizationId)
@@ -87,11 +116,34 @@ namespace Kooboo.Data.Repository
             Dictionary<string, string> para = new Dictionary<string, string>();
             para.Add("organizationId", organizationId.ToString());
             para.Add("userName", userName);
-            return HttpHelper.Post<bool>(Account.Url.Org.DeleteUser, para);
+            var ok = HttpHelper.Post<bool>(AccountUrlHelper.Org("deleteuser"), para);
+
+            if (ok)
+            {
+                var userid = Lib.Security.Hash.ComputeGuidIgnoreCase(userName);
+                Kooboo.Data.Cache.OrganizationUserCache.RemoveUser(organizationId, userid);
+            }
+            return ok;
         }
 
         public string GetName(Guid OrgId)
         {
+            if (OrgId == default(Guid))
+            {
+                return System.Guid.Empty.ToString();
+            }
+
+            var org = GetFromLocal(OrgId); 
+
+            if (org !=null)
+            {
+                return org.Name; 
+            }
+            else
+            {
+
+            }
+
             if (!NameCache.ContainsKey(OrgId))
             {
                 var user = GlobalDb.Users.GetLocalUserByOrgId(OrgId);
@@ -101,8 +153,8 @@ namespace Kooboo.Data.Repository
                     {
                         NameCache[user.CurrentOrgId] = user.CurrentOrgName;
                         return user.CurrentOrgName;
-                    } 
-                } 
+                    }
+                }
                 var getorg = Get(OrgId);
                 if (getorg != null && !string.IsNullOrWhiteSpace(getorg.Name))
                 {
@@ -119,22 +171,16 @@ namespace Kooboo.Data.Repository
             return null;
         }
 
-        public bool ChangeDataCenter(Guid OrganizationId, string DataCenter)
+        public void RemoveOrgCache(Guid orgId)
         {
-            string url = Kooboo.Data.Helper.AccountUrlHelper.Org("ChangeDataCenter");
+            GlobalDb.LocalOrganization.Delete(orgId);
+            Cache.Remove(orgId);
+        }
 
-            Dictionary<string, string> para = new Dictionary<string, string>();
-            para.Add("OrganizationId", OrganizationId.ToString());
-            para.Add("DataCenter", DataCenter);
-
-            var org = HttpHelper.Post<Organization>(url, para);
-
-            if (org != null)
-            {
-                GlobalDb.Organization.NameCache[org.Id] = org.Name;
-                return true;
-            }
-            return false;
+        public void AddOrUpdateLocal(Organization Organization)
+        {
+            GlobalDb.LocalOrganization.AddOrUpdate(Organization);
+            Cache[Organization.Id] = Organization;
         }
 
     }

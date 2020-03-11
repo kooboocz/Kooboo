@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +16,8 @@ namespace Kooboo.Data.Models
             get {
                 if (_id == default(Guid))
                 {
-                    _id = Guid.NewGuid(); 
+                    string unique = this.Domain + this.Host + this.Priority.ToString() + this.Type;
+                    _id = Lib.Security.Hash.ComputeGuidIgnoreCase(unique);
                 }
                 return _id; 
             }
@@ -44,8 +47,7 @@ namespace Kooboo.Data.Models
         public string Value { get; set; }
 
         public string Type { get; set; } = "A";
-
-       
+         
         public string Domain { get; set; }
 
         public int Priority { get; set; }
@@ -55,8 +57,5 @@ namespace Kooboo.Data.Models
             string unique = this.DomainId.ToString() + this.Host + this.Value + this.Type + this.Priority.ToString(); 
             return base.GetHashCode();
         }
-    }
-
-
-
+    } 
 }

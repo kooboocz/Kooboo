@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +20,9 @@ namespace Kooboo.Sites.Render
 
         public EnumEvaluator IgnoreEvaluators { get; set; }
 
+        // Ensure BindingRenderTask can wrap element
+        public bool HasContentTask { get; set; }
+
         public  EvaluatorOption Clone()
         {
             EvaluatorOption newoption = new EvaluatorOption();
@@ -25,9 +30,12 @@ namespace Kooboo.Sites.Render
             newoption.RenderUrl = this.RenderUrl;
             newoption.RequireBindingInfo = this.RequireBindingInfo;
             newoption.OwnerObjectId = this.OwnerObjectId;
+            newoption.HasContentTask = this.HasContentTask;
             return newoption; 
         }
-         
+          
+        public List<IEvaluator> Evaluators { get; set; }
+
     }
 
 
@@ -47,7 +55,10 @@ namespace Kooboo.Sites.Render
         Repeater = 13,
         SiteLayout = 14,
         Url = 15,
-        KFrom = 16
+        KFrom = 16, 
+        kConfig = 17,
+        kCache = 18,
+        OmitOuterTag = 19
     }
 
 }

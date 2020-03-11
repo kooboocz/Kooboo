@@ -1,4 +1,6 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data;
 using Kooboo.Data.Context;
 using Kooboo.Data.Interface;
 using Kooboo.Data.Models;
@@ -6,12 +8,13 @@ using Kooboo.IndexedDB.Schedule;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Scripting;
 using System;
+using System.Linq;
 
 namespace Kooboo.Sites.TaskQueue
 {
     public class JobBackGroundWorkder : IBackgroundWorker
     {
-        private void ExecuteScheduleJob(ScheduleItem<Job> jobinfo)
+        public void ExecuteScheduleJob(ScheduleItem<Job> jobinfo)
         {
             try
             {
@@ -33,6 +36,7 @@ namespace Kooboo.Sites.TaskQueue
                     else
                     {
                         AddJobLog(jobinfo.Item.JobName, false, DateTime.Now, jobinfo.Item.WebSiteId, "Job code not found");
+                        return; 
                     }
                 }
 
@@ -44,7 +48,7 @@ namespace Kooboo.Sites.TaskQueue
             }
         }
 
-        private void ExecuteRepeatingJob(RepeatItem<Job> repeatingJob)
+        public void ExecuteRepeatingJob(RepeatItem<Job> repeatingJob)
         {
             if (repeatingJob != null && repeatingJob.Item != null)
             {
@@ -68,6 +72,7 @@ namespace Kooboo.Sites.TaskQueue
                         else
                         {
                             AddJobLog(repeatingJob.Item.JobName, false, DateTime.Now, repeatingJob.Item.WebSiteId, "Job code not found");
+                            return; 
                         }
                     }
                     else
@@ -91,7 +96,7 @@ namespace Kooboo.Sites.TaskQueue
             option.Strict(false);
         }
         
-        private static void AddJobLog(string JobName, bool isSuccess, DateTime ExecutionTime, Guid WebSiteId, string message)
+        public  void AddJobLog(string JobName, bool isSuccess, DateTime ExecutionTime, Guid WebSiteId, string message)
         {
             GlobalDb.JobLog().Add(new JobLog()
             {
@@ -109,20 +114,23 @@ namespace Kooboo.Sites.TaskQueue
 
         public void Execute()
         {
-
             var scheduleJob = GlobalDb.ScheduleJob().DeQueue();
             while (scheduleJob != null)
             {
                 ExecuteScheduleJob(scheduleJob);
                 scheduleJob = GlobalDb.ScheduleJob().DeQueue();
-            }
+            } 
 
-            var repeatingJob = GlobalDb.RepeatingJob().DequeueItem();
-            while (repeatingJob != null)
+            var repeatingJobs = GlobalDb.RepeatingJob().DequeueItems(); 
+            
+            if (repeatingJobs !=null &&  repeatingJobs.Any())
             {
-                ExecuteRepeatingJob(repeatingJob);
-                repeatingJob = GlobalDb.RepeatingJob().DequeueItem();
+                foreach (var item in repeatingJobs)
+                {
+                    ExecuteRepeatingJob(item);
+                } 
             }
+        
         }
 
     }

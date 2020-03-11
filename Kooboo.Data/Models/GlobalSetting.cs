@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,11 +16,26 @@ namespace Kooboo.Data.Models
 
         public Dictionary<string, string> KeyValues { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); 
 
+        public bool HasKey(string key)
+        {
+            return this.KeyValues.ContainsKey(key); 
+        }
+
+        public string GetValue(string key)
+        {
+            if (this.KeyValues.ContainsKey(key))
+            {
+                return this.KeyValues[key]; 
+            }
+            return null; 
+        }
+
+        [Obsolete]
         public string Values { get; set; }
 
         public DateTime LastModified { get; set; } = DateTime.Now; 
 
-       public DateTime Expiration { get; set; }
+        public DateTime Expiration { get; set; }
 
         public int Version { get; set; }
         private Guid _id;
@@ -36,6 +53,20 @@ namespace Kooboo.Data.Models
                 return _id;
             }
             set { _id = value; }
+        }
+
+
+        public override int GetHashCode()
+        {
+            string unique = string.Empty;
+            foreach (var item in this.KeyValues)
+            {
+                unique += item.Key + item.Value;  
+            }
+
+            unique += this.Expiration.ToLongTimeString(); 
+
+            return Lib.Security.Hash.ComputeIntCaseSensitive(unique); 
         }
     }
 }

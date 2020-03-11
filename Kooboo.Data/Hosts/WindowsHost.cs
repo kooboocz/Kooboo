@@ -1,9 +1,9 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Kooboo.Data.Hosts
 {
@@ -14,6 +14,28 @@ namespace Kooboo.Data.Hosts
     /// </summary>
     public static class WindowsHost
     {
+
+        private static HostChange _change; 
+        public static HostChange change {
+            get
+            {
+                if (_change == null)
+                {
+                   if (System.IO.File.Exists(HostFile))
+                    {
+                        _change = new HostChange() { NoChange = false }; 
+                    }
+                   else
+                    {
+                        _change = new HostChange() { NoChange = true }; 
+                    }
+                }
+                return _change; 
+            }
+            set { _change = value;  }
+        }
+         
+
         private static object _object = new object();
 
         private static string kooboostart = "#<kooboo>";
@@ -22,14 +44,17 @@ namespace Kooboo.Data.Hosts
         // split lines var result = Regex.Split(text, "\r\n|\r|\n");
         private static string _hostfile;
 
-        private static string HostFile
+        public static string HostFile
         {
             get
             {
                 if (string.IsNullOrEmpty(_hostfile))
-                {
+                { 
                     string systemfolder = Environment.GetEnvironmentVariable("SystemRoot");
-                    _hostfile = System.IO.Path.Combine(systemfolder, "system32", "drivers", "etc", "hosts");
+                    if (!string.IsNullOrWhiteSpace(systemfolder))
+                    {
+                        _hostfile = System.IO.Path.Combine(systemfolder, "system32", "drivers", "etc", "hosts");
+                    } 
                 }
                 return _hostfile;
             }
@@ -64,6 +89,11 @@ namespace Kooboo.Data.Hosts
         /// <param name="IP"></param>
         public static void AddOrUpdate(string FullDomain, string IP)
         {
+            if (change.NoChange)
+            {
+                return; 
+            }
+
             if (string.IsNullOrEmpty(FullDomain) || IsIp(FullDomain))
             {
                 return; 
@@ -105,6 +135,11 @@ namespace Kooboo.Data.Hosts
         /// <param name="FullDomain"></param>
         public static void Delete(string FullDomain)
         {
+            if (change.NoChange)
+            {
+                return; 
+            }
+
             if (string.IsNullOrEmpty(FullDomain))
             {
                 return; 
@@ -131,6 +166,11 @@ namespace Kooboo.Data.Hosts
 
         public static void RemoveAll()
         {
+            if (change.NoChange)
+            {
+                return; 
+            }
+
             var list = GetList();
             foreach (var item in list)
             {
@@ -140,6 +180,11 @@ namespace Kooboo.Data.Hosts
 
         public static List<HostRecord> GetList()
         {
+            if (change.NoChange)
+            {
+                return new List<HostRecord>(); 
+            }
+
             lock (_object)
             {
                 List<HostRecord> list = new List<HostRecord>();
@@ -223,5 +268,11 @@ namespace Kooboo.Data.Hosts
             }
         }
 
+    }
+
+    public class HostChange
+
+    {
+        public bool NoChange { get; set;  }
     }
 }

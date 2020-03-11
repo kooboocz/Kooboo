@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Data.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -183,6 +185,13 @@ namespace Kooboo.Api
             {
                 return (T)Convert.ChangeType(value, type); 
             }
+            else if (type == typeof(decimal))
+            {
+                decimal decvalue = 0;
+                decimal.TryParse(value, out decvalue);
+                return (T)Convert.ChangeType(decvalue, type);
+                 
+            } 
             else
             {
                 throw new Exception("type of not supported"); 

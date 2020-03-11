@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 
@@ -81,7 +83,18 @@ namespace Kooboo.Data.Context
             }
         }
 
-        public string Method { get; set; }
+        private string _method; 
+        public string Method {
+            get { return _method;  }
+            set
+            {
+                _method = value; 
+                if (_method !=null)
+                {
+                    _method = _method.ToUpper(); 
+                }
+            }
+        }
 
         public string Host { get; set; }
 
@@ -116,9 +129,14 @@ namespace Kooboo.Data.Context
 
         public string IP { get; set; }
 
-        public string GetValue(string name)
+        public string GetValue(string name,bool needDecode=true)
         {
-            return RequestManager.GetValue(this, name);
+            return RequestManager.GetValue(this, name,needDecode);
+        }
+
+        public string Get(string name)
+        {
+            return this.GetValue(name); 
         }
 
         public string GetValue(params string[] names)

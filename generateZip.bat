@@ -1,31 +1,19 @@
 @ECHO off
 ::%1--->build type:release,server
-set buildType=%1
-set appType=%2
-set batPath=%~dp0
+set buildType=Release
+set batPath=%1
 set adminPath=%batPath%Kooboo.Web\_Admin
 
-set koobooPath=%batPath%%appType%
+set koobooPath=%batPath%Kooboo.App
 
 set dllPath=%koobooPath%\bin\%buildType%
 set langPath=%batPath%Kooboo.Web\Lang
 
 set zipFile=%dllPath%\Kooboo.zip
-if "%buildType%"=="server" set zipFile=%dllPath%\KoobooServer.zip
 set fileCompressPath=%batPath%\published\
 
 ::delete existed zipFile
 if exist "%zipFile%" (del %zipFile%)
-
-::sign kooboo
-set signToolPath=%batPath%\tools\signtool
-set certPath=%koobooPath%\bin\%buildType%\yardi.pfx
-%signToolPath% sign /f %certPath% /p 1 %koobooPath%\bin\%buildType%\kooboo.exe
-%signToolPath% timestamp /t http://timestamp.wosign.com/timestamp  %koobooPath%\bin\%buildType%\kooboo.exe
-
-
-::compress js and css in Admin folder
-%fileCompressPath%\FileCompress.exe
 
 set copyBasePath=%koobooPath%\bin\%buildType%\Kooboo
 set copyFolder=%copyBasePath%\Kooboo
@@ -42,11 +30,16 @@ if exist "%minifierAmdinPath%" ( set adminPath=%minifierAmdinPath%)
 C:\Windows\System32\robocopy  %adminPath% %copyAdminPath% /e /xd kbtest .vscode mobileEditor Market
 ::copy kbtest 
 C:\Windows\System32\robocopy  %adminPath%\kbtest %copyAdminPath%\kbtest /e
-::copy dll,exe,config
-C:\Windows\System32\robocopy  %dllPath% %copyDllPath% Kooboo.exe Kooboo.Upgrade.exe *.config
+::Kooboo.exe
+C:\Windows\System32\robocopy  %dllPath% %copyDllPath% Kooboo.exe
+::Kooboo.Upgrade.exe
+C:\Windows\System32\robocopy  %dllPath% %copyDllPath%\Upgrade  Kooboo.Upgrade.exe 
 ::copy language
 C:\Windows\System32\robocopy  %langPath% %copyLangPath%
+::copy sqlite
+C:\Windows\System32\robocopy  %koobooPath%\bin\%buildType%\x64 %copyDllPath%\x64
 
+rd /s /q %copyAdminPath%\Scripts\lib\vs
 :: delete minifier admin
 if exist "%minifierAmdinPath%" ( rd /s /q %batPath%Kooboo.Web\Minifier)
 

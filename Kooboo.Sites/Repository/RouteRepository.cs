@@ -1,4 +1,6 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data;
 using Kooboo.IndexedDB;
 using Kooboo.Sites.Routing;
 using System;
@@ -7,10 +9,9 @@ using System.Collections.Generic;
 namespace Kooboo.Sites.Repository
 {
     public class RouteRepository : SiteRepositoryBase<Kooboo.Sites.Routing.Route>
-    {
-        private object _locker = new object(); 
+    { 
 
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -65,42 +66,9 @@ namespace Kooboo.Sites.Repository
         {
             base.AddOrUpdate(route, UserId); 
         }
-
-        [Obsolete]
-        public void UpdateRoute(string relativeurl, Models.SiteObject siteobject, Guid UserId)
-        {
-            if (string.IsNullOrWhiteSpace(relativeurl))
-            {
-                return; 
-            }
-            var route = this.GetByObjectId(siteobject.Id);
-
-            Dictionary<string, string> paras=null;  
-             
-            if (route != null && route.Name != relativeurl)
-            {
-                paras = route.Parameters; 
-                this.Delete(route.Id, UserId);
-
-               //Sync.DiskSyncHelper.ChangeRoute(this.SiteDb, route.Name, relativeurl);
-            } 
-
-           // this.AddOrUpdate(relativeurl, siteobject, UserId);
-
-            Route newroute = new Route();
-            newroute.DestinationConstType = siteobject.ConstType;
-            newroute.objectId = siteobject.Id;
-            newroute.Name = relativeurl;
-            if (paras !=null && paras.Count>0)
-            {
-                newroute.Parameters = paras; 
-            }
-
-            AddOrUpdate(newroute, UserId);  
-        }
-         
+          
         public void EnsureExists(string relativeUrl, byte ConstType)
-        {
+        { 
             var route = _getbyurl(relativeUrl); 
 
             if (route == null)

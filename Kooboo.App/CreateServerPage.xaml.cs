@@ -1,4 +1,6 @@
-﻿using Kooboo.App.Commands;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.App.Commands;
 using Kooboo.App.Extensions;
 using Kooboo.App.Models;
 using Kooboo.Data;
@@ -82,7 +84,7 @@ namespace Kooboo.App
                         {
                             int.TryParse(vm.Port, out port);
                         }
-                        if (port <= 0)
+                        if (port <= 0 || port>65535)
                         {
                             MessageBox.Show(messageText);
                             return;

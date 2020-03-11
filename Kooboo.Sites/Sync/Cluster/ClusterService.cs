@@ -1,4 +1,6 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data;
 using Kooboo.Data.Interface;
 using Kooboo.Data.Models;
 using Kooboo.IndexedDB;
@@ -280,9 +282,9 @@ namespace Kooboo.Sites.Sync.Cluster
                 starturl = "http://" + ip;
             }
 
-            if (AppSettings.CurrentUsedPort != 80 && AppSettings.CurrentUsedPort > 0)
+            if (AppSettings.HttpPort != 80 && AppSettings.HttpPort > 0)
             {
-                starturl = starturl + ":" + AppSettings.CurrentUsedPort;
+                starturl = starturl + ":" + AppSettings.HttpPort;
             }
 
             return starturl; 
@@ -323,7 +325,7 @@ namespace Kooboo.Sites.Sync.Cluster
             if (log.EditType == EditType.Delete)
             {
                 item.IsDelete = true;
-                item.ObjectConstType = Service.ConstTypeService.GetConstType(repo.ModelType);
+                item.ObjectConstType = ConstTypeContainer.GetConstType(repo.ModelType);
                 item.ObjectId = key;
             }
             else

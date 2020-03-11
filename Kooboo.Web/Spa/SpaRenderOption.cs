@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -65,6 +67,46 @@ namespace Kooboo.Web.Spa
             set
             {
                 _layoutfolder = value;
+            }
+        }
+        private string _Extension;
+        public string Extension
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_Extension))
+                {
+                    _Extension = GetAppSetting("Extension");
+                    if (string.IsNullOrEmpty(_Extension))
+                    {
+                        _Extension = DefaultOptions.DefaultExtension;
+                    }
+                }
+                return _Extension;
+            }
+            set
+            {
+                _Extension = value;
+            }
+        }
+
+        private List<string> _Extensions;
+        internal List<string> Extensions
+        {
+            get
+            {
+                if (_Extensions == null)
+                {
+                    _Extensions = new List<string>();
+                    foreach (var item in Extension.Split(',').ToList())
+                    {
+                        if (!string.IsNullOrEmpty(item))
+                        {
+                            _Extensions.Add(item.Trim());
+                        }
+                    }
+                }
+                return _Extensions;
             }
         }
 
@@ -162,7 +204,9 @@ namespace Kooboo.Web.Spa
     {
         public static string DefaultLayoutFolder = "_layout";
 
-        public static string DefaultViewFolder = "_view"; 
+        public static string DefaultViewFolder = "_view";
+
+        public static string DefaultExtension = "html,cshtml";
 
         public static string DefaultGetRoot(Kooboo.Data.Context.RenderContext request)
         {

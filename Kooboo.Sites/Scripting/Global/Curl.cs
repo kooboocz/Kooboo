@@ -1,53 +1,77 @@
-﻿using Kooboo.Lib.Helper;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Lib.Helper;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Net.Http.Headers;
+using System.ComponentModel;
+using Kooboo.Data.Context;
 
-namespace Kooboo.Sites.Scripting.Global
+namespace KScript
 {
-    // TODO: should try to use async/await. 
+
     public class Curl
     {
+        private RenderContext context { get; set; }
+        public Curl(RenderContext context)
+        {
+            this.context = context;
+        }
+
+        [Description(@"Get data string from the url
+var webcontent = k.url.get(""http://www.kooboo.com""); ")]
         public string get(string url)
         {
-            return _get(url);
+            return _get(url).Result;
         }
 
+        [Description(@"Get data string from remote url using HTTP Basic authentication
+var webcontent = k.url.get(""http://www.kooboo.com"", ""username"", ""password"");")]
         public string Get(string url, string username, string password)
         {
-            return _get(url, null, username, password);
+            return _get(url, null, username, password).Result;
         }
 
+        [Description(@"Get data string from remote url using HTTP Basic authentication, and deserialize the string as a JSON object")]
+        public object GetJson(string url, string username, string password)
+        {
+            string result = _get(url, null, username, password).Result;
+            return Kooboo.Lib.Helper.JsonHelper.Deserialize(result);
+        }
+
+        [Description(@"Get data string from remote url and deserialize the string as a JSON object")]
+        public object GetJson(string url)
+        {
+            string result = _get(url).Result;
+            return Kooboo.Lib.Helper.JsonHelper.Deserialize(result);
+        }
+
+
+        [Description(@"Post data to remote url
+var data = ""name=myname&field=value""; 
+      k.url.post(""http://www.kooboo.com/fakereceiver"", data); ")]
         public string post(string url, string data)
         {
-            return _Post(url, data);
+            return _Post(url, data).Result;
         }
 
+        [Description(@"Post data to remote url using HTTP Basic authentication")]
         public string post(string url, string data, string userName, string password)
         {
-            return _Post(url, data, userName, password);
+            return _Post(url, data, userName, password).Result;
         }
-
+        [Description(@"Post data as a Json string to remote url using HTTP Basic authentication")]
         public string postData(string url, object data, string userName, string password)
         {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-
-            string poststring = string.Empty;
-
-            if (parameters != null && parameters.Count() > 0)
-            {
-                poststring = String.Join("&", parameters.Select(it => String.Concat(it.Key, "=", System.Net.WebUtility.UrlEncode(it.Value))));
-            }
-
-            return _Post(url, poststring, userName, password);
+            string poststring = Kooboo.Lib.Helper.JsonHelper.Serialize(data); 
+            return _Post(url, poststring, userName, password).Result;
         }
-
-
+         
         private Dictionary<string, string> getvalues(object obj)
         {
 
@@ -96,7 +120,7 @@ namespace Kooboo.Sites.Scripting.Global
                 if (value != null)
                 {
                     foreach (var item in value)
-                    { 
+                    {
                         if (item.Value != null)
                         {
                             result.Add(item.Key, item.Value.ToString());
@@ -109,25 +133,33 @@ namespace Kooboo.Sites.Scripting.Global
                 }
             }
 
-            return result; 
+            return result;
         }
-
-
-        private static string _Post(string url, string json, string UserName = null, string Password = null)
+         
+        private static async Task<string> _Post(string url, string json, string UserName = null, string Password = null)
         {
             try
             {
-                json = System.Net.WebUtility.UrlEncode(json);
-                var postData = Encoding.UTF8.GetBytes(json);
-                var client = new WebClient();
-                client.Proxy = null;
+                var client = HttpClientHelper.Client;
 
-                client.Headers.Add("user-agent", DefaultUserAgent);
-                client.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
-                SetSslValidate(url);
-                var responseData = client.UploadData(url, "POST", postData);
+                var content = new StringContent(json, Encoding.UTF8);
+                content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/json");
+                var requestMessage = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(url),
+                    Method = HttpMethod.Post,
+                    Content = content,
+                };
+                if (!string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password))
+                {
+                    var bytes = Encoding.UTF8.GetBytes(String.Format("{0}:{1}", UserName, Password));
+                    requestMessage.Headers.Add(HttpRequestHeader.Authorization.ToString(), "Basic " + Convert.ToBase64String(bytes));
+                }
 
-                return Encoding.UTF8.GetString(responseData);
+                var response = await client.SendAsync(requestMessage);
+
+                var byteArray = await response.Content.ReadAsByteArrayAsync();
+                return Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
 
             }
             catch (Exception ex)
@@ -136,22 +168,24 @@ namespace Kooboo.Sites.Scripting.Global
             }
 
         }
-
-        private static void SetSslValidate(string url)
+        [Description(@"Download zip package by url.")]
+        public void DownloadZip(string url)
         {
-            if (url.ToLower().StartsWith("https", StringComparison.OrdinalIgnoreCase))
+            HttpClient client = HttpClientHelper.Client;
+            var requestMessage = new HttpRequestMessage
             {
-                ServicePointManager.ServerCertificateValidationCallback += CheckValidationResult;
-            }
+                RequestUri = new Uri(url),
+                Method = HttpMethod.Get,
+            };
+
+            var response = client.SendAsync(requestMessage).Result;
+            var bytes = response.Content.ReadAsByteArrayAsync().Result;
+            context.Response.Headers.Add("Content-Disposition", response.Content.Headers.ContentDisposition.ToString());
+            context.Response.ContentType = "application/zip";
+            context.Response.Body = bytes;
         }
 
-        private static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
-        {
-            //make self signed cert ,so not validate cert in client
-            return true;
-        }
-
-        private static string _get(string url, Dictionary<string, string> query = null, string UserName = null, string Password = null)
+        private static async Task<string> _get(string url, Dictionary<string, string> query = null, string UserName = null, string Password = null)
         {
 
             try
@@ -160,19 +194,23 @@ namespace Kooboo.Sites.Scripting.Global
                 {
                     url = UrlHelper.AppendQueryString(url, query);
                 }
-                var client = new WebClient();
-                client.Headers.Add("user-agent", DefaultUserAgent);
 
+                HttpClient client = HttpClientHelper.Client;
+                var requestMessage = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(url),
+                    Method = HttpMethod.Get
+                };
                 if (!string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password))
                 {
                     var bytes = Encoding.UTF8.GetBytes(String.Format("{0}:{1}", UserName, Password));
-                    client.Headers.Add("Authorization", "Basic " + Convert.ToBase64String(bytes));
+                    requestMessage.Headers.Add(HttpRequestHeader.Authorization.ToString(), "Basic " + Convert.ToBase64String(bytes));
                 }
-                client.Proxy = null;
-                client.Encoding = Encoding.UTF8;
-                SetSslValidate(url);
-                var uri = new Uri(url);
-                return client.DownloadString(url);
+
+                var response = await client.SendAsync(requestMessage);
+
+                var byteArray = await response.Content.ReadAsByteArrayAsync();
+                return Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
             }
             catch (Exception ex)
             {
@@ -181,6 +219,44 @@ namespace Kooboo.Sites.Scripting.Global
 
         }
 
-        private static readonly string DefaultUserAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 4.0.30319)";
+        public string postform(string url, string data, string userName, string password)
+        {
+            return _PostForm(url, data, userName, password).Result;
+        }
+
+        public string postform(string url, object data, string userName, string password)
+        {
+            string json = JsonHelper.Serialize(data);
+            return _PostForm(url, json, userName, password).Result;
+        }
+
+        private async Task<string> _PostForm(string url, string json, string UserName = null, string Password = null)
+        {
+            string result;
+            try
+            {
+                HttpClient client = HttpClientHelper.Client;
+                FormUrlEncodedContent content = new FormUrlEncodedContent(JsonHelper.Deserialize<IDictionary<string, string>>(json));
+                HttpRequestMessage httpRequestMessage = new HttpRequestMessage
+                {
+                    RequestUri = new Uri(url),
+                    Method = HttpMethod.Post,
+                    Content = content
+                };
+                if (!string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password))
+                {
+                    byte[] bytes = Encoding.UTF8.GetBytes(string.Format("{0}:{1}", UserName, Password));
+                    httpRequestMessage.Headers.Add(HttpRequestHeader.Authorization.ToString(), "Basic " + Convert.ToBase64String(bytes));
+                }
+                byte[] array = await (await client.SendAsync(httpRequestMessage)).Content.ReadAsByteArrayAsync();
+                result = Encoding.UTF8.GetString(array, 0, array.Length);
+            }
+            catch (Exception ex)
+            {
+                result = ex.Message;
+            }
+            return result;
+        }
+
     }
 }

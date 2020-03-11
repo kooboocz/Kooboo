@@ -1,15 +1,24 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
+using System.Linq;
 
 namespace Kooboo.Lib.Reflection
 {
     public static class AssemblyLoader
-    { 
+    {
+        private static List<Assembly> allAssemblies = new List<Assembly>();
         static AssemblyLoader()
         {
-            AllAssemblies = new List<Assembly>();
+            allAssemblies = LoadAllDlls();
+        }
+
+        private static List<Assembly> LoadAllDlls()
+        {
+            var dlls = new List<Assembly>();
 
             var allassembs = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -19,20 +28,72 @@ namespace Kooboo.Lib.Reflection
                 {
                     if (!IsIgnoredName(item.FullName))
                     {
-                        AllAssemblies.Add(item);
+                        dlls.Add(item);
                     }
                 }
             }
-            var otherAssemblies = LoadOtherAssemblies();
 
-            AllAssemblies.AddRange(otherAssemblies);
+            var path = AppDomain.CurrentDomain.BaseDirectory;
+            dlls = LoadKoobooDlls(dlls, path);
 
+            return dlls;
+        }
+
+        public static List<Assembly> LoadKoobooDlls(List<Assembly> dlls, string path)
+        {
+            if (dlls == null)
+            {
+                dlls = new List<Assembly>();
+            }
+            var alldlls = System.IO.Directory.GetFiles(path, "*.dll", SearchOption.TopDirectoryOnly);
+
+            foreach (var name in alldlls)
+            {
+                string dllname = name.Substring(path.Length);
+
+                if (string.IsNullOrWhiteSpace(dllname))
+                {
+                    continue;
+                }
+
+                dllname = dllname.Trim('\\').Trim('/');
+
+                if (dllname.StartsWith("Kooboo.") && dllname.EndsWith(".dll"))
+                {
+                    var index = dllname.LastIndexOf(".");
+                    if (index > -1)
+                    {
+                        string koobooname = dllname.Substring(0, index);
+                        var find = dlls.Find(o => o.FullName.StartsWith(koobooname));
+                        if (find == null && !IsIgnoredName(koobooname))
+                        {
+                            var otherAssembly = Assembly.LoadFile(name);
+                            dlls.Add(otherAssembly);
+                        }
+                    }
+                }
+            }
+            return dlls;
+        }
+
+        public static void AddAssembly(Assembly assembly)
+        {
+            if (allAssemblies.All(a => a.FullName != assembly.FullName)) allAssemblies.Add(assembly);
         }
 
         public static List<Assembly> AllAssemblies
         {
-            get; set;
+            get
+            {
+                var list = new List<Assembly>();
+                list.AddRange(allAssemblies);
+                list.AddRange(ExtensionAssemblyLoader.Instance.Assemblies);
+
+                return list;
+                //allAssemblies.Concat(ExtensionAssemblyLoader.Instance.Assemblies).ToList();
+            }
         }
+
 
         private static List<Assembly> LoadOtherAssemblies()
         {
@@ -49,7 +110,6 @@ namespace Kooboo.Lib.Reflection
                     var otherAssembly = Assembly.LoadFile(path);
                     otherAssemblies.Add(otherAssembly);
                 }
-
             }
 
             return otherAssemblies;
@@ -63,7 +123,7 @@ namespace Kooboo.Lib.Reflection
             }
 
             string lower = FullName.ToLower();
-            if (lower.StartsWith("mscorlib") || lower.StartsWith("microsoft") || lower.StartsWith("kooboo.dom") || lower.StartsWith("kooboo.indexeddb") || lower.StartsWith("newtonsoft") || lower.StartsWith("vshost"))
+            if (lower.StartsWith("mscorlib") || lower.StartsWith("microsoft") || lower.StartsWith("anonymously") || lower.StartsWith("kooboo.dom") || lower.StartsWith("kooboo.indexeddb") || lower.StartsWith("newtonsoft") || lower.StartsWith("vshost") || lower.StartsWith("kooboo.httpserver"))
             {
                 return true;
             }
@@ -85,16 +145,35 @@ namespace Kooboo.Lib.Reflection
                         typelist.Add(type);
                     }
                 }
+
             }
 
-            return typelist;     
+            return typelist;
         }
-                      
+
+        public static List<Type> LoadTypeByBaseClass(Type baseType)
+        {
+            List<Type> typelist = new List<Type>();
+
+            foreach (var item in AllAssemblies)
+            {
+                foreach (var type in item.GetTypes())
+                {
+                    if (!type.IsAbstract && type.IsClass && type.IsSubclassOf(baseType))
+                    {
+                        typelist.Add(type);
+                    }
+                }
+
+            }
+
+            return typelist;
+        }
 
         public static List<Type> LoadTypeByGenericInterface(Type GenericInterface)
         {
             List<Type> typelist = new List<Type>();
-             
+
             foreach (var item in AllAssemblies)
             {
                 foreach (var type in item.GetTypes())
@@ -105,8 +184,22 @@ namespace Kooboo.Lib.Reflection
                     }
                 }
             }
-             
+
             return typelist;
+        }
+
+        public static Type LoadTypeByFullClassName(string fullClassName)
+        {
+            foreach (var item in AllAssemblies)
+            {
+                var type = item.GetType(fullClassName);
+                if (type != null)
+                {
+                    return type;
+                }
+            }
+
+            return null;
         }
 
     }

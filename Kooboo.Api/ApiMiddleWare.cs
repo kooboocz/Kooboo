@@ -1,9 +1,10 @@
-﻿using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System.Threading.Tasks; 
 using Kooboo.Api.ApiResponse;
 using Kooboo.Data.Context;
 using Kooboo.Data.Server;
+using System;
 
 namespace Kooboo.Api
 {
@@ -18,10 +19,10 @@ namespace Kooboo.Api
             }
         }
 
-        private string Prefix { get; set; }
+        public string Prefix { get; set; }
 
         private string _beforeapi; 
-       internal string BeforeApi
+        internal string BeforeApi
         {
             get
             {
@@ -49,7 +50,9 @@ namespace Kooboo.Api
             set
             { _beforeapi = value;    }
         }
-           
+
+        public Action<Kooboo.Data.Context.RenderContext, IResponse> Log { get; set; }
+
         public IApiProvider ApiProvider { get; set;  }
 
         public IKoobooMiddleWare Next
@@ -71,12 +74,23 @@ namespace Kooboo.Api
             {
                 context.Response.StatusCode = 500;
                 context.Response.Body = System.Text.Encoding.UTF8.GetBytes("Invalid Api command");
+
+                if (Log !=null)
+                {
+                    Log(context, null); 
+                }
+
                 return;
             }
 
             ApiCall apirequest = new ApiCall() { Command = command, Context = context };
 
             var response = ApiManager.Execute(apirequest, this.ApiProvider);
+
+            if (Log !=null)
+            {
+                Log(context, response); 
+            }
 
             if (response is MetaResponse)
             {
@@ -115,6 +129,10 @@ namespace Kooboo.Api
             {
                 // do nothing. 
             }
+            else if (response is PlainResponse)
+            {
+                RenderPlainResponse(context, response as PlainResponse); 
+            }
             else
             {         
                 MultilingualService.EnsureLangText(response, context);   
@@ -148,5 +166,18 @@ namespace Kooboo.Api
             } 
             context.Response.Body= resposne.BinaryBytes;
         }
+
+        public void RenderPlainResponse(RenderContext context, PlainResponse resposne)
+        {
+            if (resposne == null)
+            {
+                return;
+            }
+            context.Response.ContentType = resposne.ContentType;
+            context.Response.StatusCode = resposne.statusCode;
+
+            context.Response.Body = System.Text.Encoding.UTF8.GetBytes(resposne.Content);  
+        }
+
     }
 } 

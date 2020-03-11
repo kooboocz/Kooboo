@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Data.Models;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Models;
@@ -45,6 +47,7 @@ namespace Kooboo.Web.Api.Implementation
                    
         }
 
+        [Kooboo.Web.Menus.SiteObjectMenu]
         public List<IEmbeddableItemListViewModel> External(ApiCall apiCall)
         {
             var sitedb = apiCall.WebSite.SiteDb();
@@ -203,7 +206,7 @@ namespace Kooboo.Web.Api.Implementation
             {
                 return null;
             }
-            byte consttype = ConstObjectType.GetByte(type);
+            byte consttype = ConstTypeContainer.GetConstType(type);
 
             if (call.ObjectId != default(Guid))
             {

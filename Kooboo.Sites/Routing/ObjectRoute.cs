@@ -1,4 +1,6 @@
-﻿using Kooboo.Lib.Helper;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Lib.Helper;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Repository;
 using System;
@@ -9,17 +11,11 @@ namespace Kooboo.Sites.Routing
 {
     public static class ObjectRoute
     {
-        /// <summary>
-        /// parse the router and alter the routing in the context.environment
-        /// route contains the page or file to be loaded.
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="site"></param>
-        /// <returns></returns>
         public static void Parse(Render.FrontContext context)
         {
             Route foundroute = null;
 
+            var nameOrId = string.Empty;
             if (context.RenderContext.WebSite.EnableFrontEvents && context.RenderContext.IsSiteBinding)
             {
                 foundroute = FrontEvent.Manager.RaiseRouteEvent(FrontEvent.enumEventType.RouteFinding, context.RenderContext);
@@ -27,14 +23,34 @@ namespace Kooboo.Sites.Routing
                 if (foundroute == null)
                 {
                     foundroute = GetRoute(context, context.RenderContext.Request.RelativeUrl);
-                    if (foundroute != null)
+                    if (foundroute == null)
+                    {
+                        var relativeUrl = context.RenderContext.Request.RelativeUrl;
+                        int questionMarkIndex = relativeUrl.IndexOf("?");
+                        if (questionMarkIndex>0)
+                        {
+                            relativeUrl = relativeUrl.Substring(0, questionMarkIndex);
+                        }
+                        var lastSlashIndex= relativeUrl.LastIndexOf("/");
+                        if (lastSlashIndex > -1)
+                        {
+                            var url = relativeUrl.Substring(0, lastSlashIndex);
+                            nameOrId = relativeUrl.Substring(lastSlashIndex + 1);
+                            foundroute = GetRoute(context, url);
+                        }
+                        
+                    }
+                    if (foundroute != null && foundroute.objectId != default(Guid))
+                    // if (foundroute != null)
                     {
                         var foundRouteEventResult = FrontEvent.Manager.RaiseRouteEvent(FrontEvent.enumEventType.RouteFound, context.RenderContext, foundroute);
+
 
                         if (foundRouteEventResult != null && foundRouteEventResult.objectId != default(Guid))
                         {
                             foundroute = foundRouteEventResult;
                         }
+
                     }
                     else
                     {
@@ -53,35 +69,96 @@ namespace Kooboo.Sites.Routing
                 return;
             }
 
-            /// if this is a server redirect to another route. 
-            while (foundroute.DestinationConstType == ConstObjectType.Route)
+            foundroute = VerifyRoute(context.SiteDb, foundroute);
+
+            if (foundroute == null)
             {
-                Route destinationroute = context.SiteDb.Routes.Get(foundroute.objectId);
-                if (destinationroute != null)
-                {
-                    foundroute = destinationroute;
-                }
-                else
-                {
-                    return;
-                }
+                return;
             }
 
             var newroute = CopyRouteWithoutParameter(foundroute);
 
             newroute.Parameters = ParseParameters(foundroute, context.RenderContext.Request.RelativeUrl);
-
+            if (!string.IsNullOrEmpty(nameOrId))
+            {
+                newroute.Parameters.Add("nameOrId", nameOrId);
+            }
             context.Route = newroute;
             context.Log.ConstType = foundroute.DestinationConstType;
             context.Log.ObjectId = foundroute.objectId;
+        }
 
+        public static Route VerifyRoute(SiteDb siteDb, Route OriginalRoute)
+        {
+            if (OriginalRoute.DestinationConstType == ConstObjectType.Route)
+            {
+                int counter = 0;
+                var dest = GetDestinationRoute(siteDb, OriginalRoute, ref counter);
+                if (dest != null)
+                {
+                    if (dest.DestinationConstType == ConstObjectType.Route)
+                    {
+                        if (string.IsNullOrEmpty(OriginalRoute.Name) || OriginalRoute.Name == "/" || OriginalRoute.Name == "\\" || OriginalRoute.Name.StartsWith("/?"))
+                        {
+                            return GetDefaultRoute(siteDb);
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        return dest;
+                    }
+
+                }
+            }
+            else
+            {
+                return OriginalRoute;
+            }
+            return null;
+        }
+
+        public static Route GetDestinationRoute(SiteDb sitedb, Route OriginalRoute, ref int counter)
+        {
+
+            if (OriginalRoute.Id == OriginalRoute.objectId)
+            {
+                return OriginalRoute;
+            }
+
+            Route destinationroute = sitedb.Routes.Get(OriginalRoute.objectId);
+
+            if (destinationroute != null)
+            {
+                if (destinationroute.DestinationConstType == ConstObjectType.Route)
+                {
+                    counter += 1;
+                    if (counter > 5)
+                    {
+                        return destinationroute;
+                    }
+                    else
+                    {
+                        return GetDestinationRoute(sitedb, destinationroute, ref counter);
+                    }
+                }
+                else
+                {
+                    return destinationroute;
+                }
+            }
+
+            return OriginalRoute;
         }
 
         private static Route GetRoute(Render.FrontContext context, string url)
         {
             Route foundroute = GetRoute(context.WebSite.SiteDb(), url);
 
-            if (foundroute == null)
+            if (foundroute == null || foundroute.objectId == default(Guid))
             {
                 if (string.IsNullOrEmpty(url) || url == "/" || url == "\\" || url.StartsWith("/?"))
                 {
@@ -184,9 +261,9 @@ namespace Kooboo.Sites.Routing
                 {
                     sysRoute.Name = "/__kb/{objecttype}/{nameorid}/{action}";
                 }
-                else if (segments.Count()> 4)
+                else if (segments.Count() > 4)
                 {
-                    sysRoute.Name = "/__kb/{objecttype}/{path}"; 
+                    sysRoute.Name = "/__kb/{objecttype}/{path}";
                 }
             }
             else
@@ -198,8 +275,7 @@ namespace Kooboo.Sites.Routing
 
                 if (byte.TryParse(start, out output))
                 {
-
-                    if (ConstObjectType.Types.Values.Contains(output))
+                    if (ConstTypeContainer.ByteTypes.ContainsKey(output))
                     {
                         if (sitedb != null)
                         {
@@ -220,7 +296,7 @@ namespace Kooboo.Sites.Routing
                 }
                 else
                 {
-                    if (ConstObjectType.Types.ContainsKey(start))
+                    if (ConstTypeContainer.nameTypes.ContainsKey(start))
                     {
                         if (sitedb != null)
                         {

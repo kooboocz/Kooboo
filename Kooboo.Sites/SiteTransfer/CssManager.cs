@@ -1,4 +1,6 @@
-﻿using Kooboo.Lib.Helper;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Lib.Helper;
 using Kooboo.Sites.Models;
 using Kooboo.Sites.SiteTransfer.Download;
 using System;
@@ -209,7 +211,7 @@ namespace Kooboo.Sites.SiteTransfer
             }
             else
             {
-                newdownload.ConstType = ConstObjectType.File;
+                newdownload.ConstType = ConstObjectType.CmsFile;
             }
             manager.AddTask(newdownload);
             return relativeurl;

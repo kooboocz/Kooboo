@@ -1,4 +1,6 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data;
 using Kooboo.IndexedDB;
 using Kooboo.Lib.Helper;
 using Kooboo.Sites.Models;
@@ -12,7 +14,7 @@ namespace Kooboo.Sites.Repository
 {
     public class PageRepository : SiteRepositoryBase<Page>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -210,8 +212,18 @@ namespace Kooboo.Sites.Repository
                 List.Add(newId);
                 CurrentResult[consttype] = List;
             }
-        }  
-         
-    
+        }
+
+
+        public override bool AddOrUpdate(Page value)
+        {
+            return this.AddOrUpdate(value, default(Guid));
+        }
+
+        public override bool AddOrUpdate(Page value, Guid UserId)
+        {
+            return base.AddOrUpdate(value, UserId);
+        }
+
     }
 }

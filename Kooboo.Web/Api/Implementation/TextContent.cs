@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Sites.Contents.Models;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.ViewModel;
@@ -56,6 +58,11 @@ namespace Kooboo.Web.Api.Implementation
 
             if (!string.IsNullOrEmpty(userkey) && newcontent.UserKey != userkey)
             {
+                var existings = sitedb.TextContent.Get(userkey); 
+                if (existings !=null && existings.Id != newcontent.Id)
+                {
+                    throw new Exception(Data.Language.Hardcoded.GetValue("UserKey has been taken", call.Context));
+                }
                 sitedb.TextContent.Delete(newcontent.Id);
                 newcontent.UserKey = userkey;
             }

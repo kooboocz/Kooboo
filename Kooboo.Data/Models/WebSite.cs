@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kooboo.Extensions;
@@ -169,7 +171,7 @@ namespace Kooboo.Data.Models
 
         public bool AutoDetectCulture { get; set; }
 
-        public bool ContinueDownload { get; set; } = true;
+        public bool ContinueDownload { get; set; } = false;
 
         public bool Published { get; set; } = true;
 
@@ -190,7 +192,24 @@ namespace Kooboo.Data.Models
 
         public bool EnableImageLog { get; set; } = true;
 
-        public bool EnableDiskSync { get; set; }
+
+
+        private bool _enabledisksync;
+        public bool EnableDiskSync
+        {
+            get
+            {
+                if (Data.AppSettings.IsOnlineServer)
+                {
+                    return false;
+                }
+                return _enabledisksync;
+            }
+            set
+            {
+                _enabledisksync = value;
+            }
+        }
 
         public bool EnableSitePath { get; set; }
 
@@ -200,7 +219,7 @@ namespace Kooboo.Data.Models
 
         public bool EnableConstraintFixOnSave { get; set; } = true;
 
-        public bool EnableFrontEvents { get; set; } = true;
+        public bool EnableFrontEvents { get; set; } = false;
 
         public bool EnableConstraintChecker { get; set; }
 
@@ -235,7 +254,8 @@ namespace Kooboo.Data.Models
         public string DiskSyncFolder
         {
             get
-            {
+            { 
+
                 if (string.IsNullOrEmpty(this._LocalDiskSyncFolder))
                 {
                     _LocalDiskSyncFolder = System.IO.Path.Combine(AppSettings.GetOrganizationFolder(this.OrganizationId), "___disksync", this.Name);
@@ -289,16 +309,29 @@ namespace Kooboo.Data.Models
         [JsonConverter(typeof(StringEnumConverter))]
         public Data.Definition.WebsiteType SiteType { get; set; } = Definition.WebsiteType.p;
 
+        public bool IsApp { get; set; }
+
         public override int GetHashCode()
         {
             string unique = string.Empty;
             unique += this.Name + this.DisplayName + this.OrganizationId;
             unique += this.ContinueConvert.ToString() + this.ContinueDownload.ToString() + this.EnableCache.ToString() + this.EnableCluster.ToString() + this.EnableConstraintChecker.ToString() + this.EnableConstraintFixOnSave.ToString() + this.EnableDiskSync.ToString() + this.EnableFrontEvents.ToString() + this.EnableMultilingual.ToString() + this.EnableSitePath.ToString() + this.EnableVisitorLog.ToString() + this.EnableFullTextSearch.ToString();
 
+            unique += this.EnableSystemRoute.ToString();
+
+            unique += this.EnableECommerce.ToString();
+
+            unique += this.EnableFileIOUrl.ToString();
+
+            //public bool EnableECommerce { get; set; } 
+            //Enable direct access to view, htmlblock etc, via system routes. 
+            //public bool EnableSystemRoute { get; set; }
+            //public bool EnableFileIOUrl { get; set; } = true;
+
+
             unique += this.LocalRootPath + this.MirrorWebSiteBaseUrl + this._LocalDiskSyncFolder;
 
             unique += this.DefaultCulture + this.AutoDetectCulture.ToString();
-
 
             foreach (var item in this.Cultures)
             {
@@ -328,7 +361,9 @@ namespace Kooboo.Data.Models
             }
 
             unique += this.Published.ToString();
-            unique += this.SiteType.ToString(); 
+            unique += this.SiteType.ToString();
+            unique += this.IsApp.ToString();
+            unique += this.ForceSSL.ToString();
             return Lib.Security.Hash.ComputeIntCaseSensitive(unique);
         }
     }

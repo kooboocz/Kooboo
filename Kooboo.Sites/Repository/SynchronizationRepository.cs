@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB;
 using Kooboo.Sites.Models;
 using System;
 using System.Collections.Generic;
@@ -15,7 +17,7 @@ namespace Kooboo.Sites.Repository
 
         public Guid GlobalObjectId = default(Guid);
         
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -45,7 +47,7 @@ namespace Kooboo.Sites.Repository
             var allversion = this.SiteDb.Synchronization.Query.Where(o => o.SyncSettingId == SyncSettingId).SelectAll();
            var pastversion =  allversion.Select(o => o.Version).Distinct().ToList();
 
-            alllogs = alllogs.Where(o=>!pastversion.Contains(o.Id)).ToList(); 
+            alllogs = alllogs.Where(o=> o !=null && !pastversion.Contains(o.Id)).ToList(); 
 
             foreach (var item in alllogs.OrderByDescending(o => o.Id))
             { 

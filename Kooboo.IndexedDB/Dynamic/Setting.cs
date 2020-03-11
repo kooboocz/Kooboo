@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -11,6 +13,8 @@ namespace Kooboo.IndexedDB.Dynamic
         public Setting()
         {
         }
+
+        public bool EnableLog { get; set; } = true;
 
         private HashSet<TableColumn> _columns;
         public HashSet<TableColumn> Columns
@@ -134,10 +138,10 @@ namespace Kooboo.IndexedDB.Dynamic
                     if (!IsSameValue(item.Name, FieldName))
                     {
                         item.IsPrimaryKey = false;
-                       if (item.Name != Constants.DefaultIdFieldName)
+                        if (item.Name != Constants.DefaultIdFieldName)
                         {
                             item.IsUnique = false;
-                            item.IsIndex = false; 
+                            item.IsIndex = false;
                         }
                     }
                 }
@@ -154,16 +158,16 @@ namespace Kooboo.IndexedDB.Dynamic
                 id.IsUnique = true;
             }
         }
-         
+
         public void AddColumn(TableColumn col)
         {
             lock (_locker)
             {
                 if (col.IsIncremental)
-                { 
+                {
                     col.DataType = typeof(long).FullName;
                     col.IsUnique = true;
-                    col.IsIndex = true; 
+                    col.IsIndex = true;
                 }
 
                 // double verify..
@@ -175,7 +179,8 @@ namespace Kooboo.IndexedDB.Dynamic
                 else
                 {
                     col.Length = SettingHelper.GetColumnLen(col.ClrType, col.Length);
-                    // get all the relative positive without the complex flxiable position.  
+                    // get all the relative positive without the complex flxiable position.
+
                     if (col.Length == int.MaxValue)
                     {
                         col.relativePosition = int.MaxValue;
@@ -200,7 +205,7 @@ namespace Kooboo.IndexedDB.Dynamic
 
                 if (string.IsNullOrEmpty(col.ControlType))
                 {
-                    col.ControlType = AssignControlType(col.ClrType); 
+                    col.ControlType = AssignControlType(col.ClrType);
                 }
 
                 this.Columns.Add(col);
@@ -249,7 +254,7 @@ namespace Kooboo.IndexedDB.Dynamic
             }
             return "TextBox";
         }
-         
+
         public void AppendColumn(string FieldOrPropertyName, Type DataType, int length)
         {
             lock (_locker)
@@ -309,6 +314,7 @@ namespace Kooboo.IndexedDB.Dynamic
 
         // The position that this will be stored in the block data file. 
         // Int.maxvalue means dynamic.. can not be searched....
+        // When set to INT.Max. it is only for the sorting. 
         public int relativePosition { get; set; }
 
         private Type _clrtype;
@@ -354,7 +360,7 @@ namespace Kooboo.IndexedDB.Dynamic
         {
             return this.Name == other.Name;
         }
-          
+
     }
 
 }

@@ -1,4 +1,6 @@
-﻿using Kooboo.Sites.Contents.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Contents.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +13,7 @@ namespace Kooboo.Sites.Repository
     public class LabelRepository : SiteRepositoryBase<Label>
     {
 
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -54,7 +56,6 @@ namespace Kooboo.Sites.Repository
                 return newlabel;
             }
         }
-
-
+         
     }
 }

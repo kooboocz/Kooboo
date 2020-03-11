@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB;
 using Kooboo.Sites.Models;
 using Kooboo.Sites.Routing;
 using System;
@@ -8,7 +10,7 @@ namespace Kooboo.Sites.Repository
 {
     public class FolderRepository : SiteRepositoryBase<Kooboo.Sites.Models.Folder>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {
@@ -187,7 +189,7 @@ namespace Kooboo.Sites.Repository
         {
             List<T> list = new List<T>();
 
-            byte consttype = Service.ConstTypeService.GetConstType(typeof(T));
+            byte consttype = ConstTypeContainer.GetConstType(typeof(T));
 
             var siteobjectlist = GetFolderObjects(FolderPath, consttype, UseColumnDataOnly, Recursive);
 

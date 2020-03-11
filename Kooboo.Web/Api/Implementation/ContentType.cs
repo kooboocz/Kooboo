@@ -1,4 +1,7 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
+using Kooboo.Data.Definition;
 using Kooboo.Sites.Contents.Models;
 using Kooboo.Sites.Extensions;
 using Kooboo.Web.ViewModel;
@@ -100,10 +103,8 @@ namespace Kooboo.Web.Api.Implementation
                         removeProp.Add(item);
                     }
                     else { hasonline = true; }
-                }
-
-            }
-
+                } 
+            } 
         }
 
         private void ValidateReservedFields(ContentType contentType, ApiCall call)

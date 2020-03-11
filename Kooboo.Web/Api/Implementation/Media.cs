@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Data.Models;
 using Kooboo.Lib.Utilities;
 using Kooboo.Sites.Extensions;
@@ -275,7 +277,7 @@ namespace Kooboo.Web.Api.Implementation
         {
             string baseurl = siteDb.WebSite.BaseUrl(); 
             // by = View, Page, Layout, TextContent, Style. 
-            byte consttype = ConstObjectType.GetByte(by);
+            byte consttype = ConstTypeContainer.GetConstType(by);
              
             var images = siteDb.Images.ListUsedBy(consttype);
 
@@ -317,7 +319,7 @@ namespace Kooboo.Web.Api.Implementation
         {
             string baseurl = siteDb.WebSite.BaseUrl();
             // by = View, Page, Layout, TextContent, Style. 
-            byte consttype = ConstObjectType.GetByte(by);
+            byte consttype = ConstTypeContainer.GetConstType(by);
 
             var images = siteDb.Images.ListUsedBy(consttype);
 

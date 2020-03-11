@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,19 +21,28 @@ namespace Kooboo.Lib.Helper
                 return "text/html";
             }
 
-            int Qmark = fileName.IndexOf("?"); 
+            int Qmark = fileName.IndexOf("?");
             if (Qmark > -1)
             {
-                fileName = fileName.Substring(0, Qmark); 
+                fileName = fileName.Substring(0, Qmark);
             }
 
-            int HashMark = fileName.IndexOf("#"); 
-            if (HashMark >-1)
+            int HashMark = fileName.IndexOf("#");
+            if (HashMark > -1)
             {
-                fileName = fileName.Substring(0, HashMark); 
+                fileName = fileName.Substring(0, HashMark);
             }
 
-            var extension = Path.GetExtension(fileName);
+            string extension = null;
+
+            try
+            {
+                extension = Path.GetExtension(fileName);
+            }
+            catch (Exception)
+            {
+            }
+
             if (extension == null)
             {
                 return "text/html";
@@ -78,6 +89,10 @@ namespace Kooboo.Lib.Helper
                     return "audio/aiff";
                 case ".application":
                     return "application/x-ms-application";
+                case ".apk":
+                    return "application/vnd.android.package-archive";
+                case ".xapk":
+                    return "application/vnd.android.package-archive";
                 case ".art":
                     return "image/x-jg";
                 case ".asd":
@@ -802,25 +817,24 @@ namespace Kooboo.Lib.Helper
             return mimeType.Contains("text") || mimeType.Contains("script") || mimeType.Contains("xml") || mimeType.Contains("json") || mimeType.Contains("style") || mimeType.Contains("html");
         }
 
-        public static string CombinePath(string basefolder, string subFolder) 
+        public static string CombinePath(string basefolder, string subFolder)
         {
             if (string.IsNullOrEmpty(subFolder))
             {
-                return basefolder; 
+                return basefolder;
             }
 
             if (string.IsNullOrEmpty(basefolder))
             {
-                return subFolder; 
+                return subFolder;
             }
 
             if (subFolder.StartsWith("/") || subFolder.StartsWith("\\"))
             {
-                subFolder = subFolder.Substring(1); 
+                subFolder = subFolder.Substring(1);
             }
 
-            subFolder = subFolder.Replace("/", "\\"); 
-            return System.IO.Path.Combine(basefolder, subFolder);  
+            return Kooboo.Lib.Compatible.CompatibleManager.Instance.System.CombinePath(basefolder, subFolder);
         }
 
         /// <summary>
@@ -863,21 +877,7 @@ namespace Kooboo.Lib.Helper
                 return true;
             };
 
-            Func<string, List<string>> ToSegments = (input) =>
-                {
-                    if (string.IsNullOrEmpty(input))
-                    {
-                        return new List<string>();
-                    }
-                    input = input.Replace('/', '\\');
-                    input = input.Trim();
-                    if (input.StartsWith("\\"))
-                    {
-                        input = input.Substring(1);
-                    }
-                    return input.Split('\\').ToList();
-
-                };
+            Func<string, List<string>> ToSegments = Kooboo.Lib.Compatible.CompatibleManager.Instance.System.GetSegments;
 
             List<List<string>> AllSegments = new List<List<string>>();
 
@@ -921,7 +921,7 @@ namespace Kooboo.Lib.Helper
             }
             else
             {
-                return string.Join("\\", common.ToArray());
+                return Kooboo.Lib.Compatible.CompatibleManager.Instance.System.JoinPath(common.ToArray());
             }
         }
 
@@ -929,7 +929,7 @@ namespace Kooboo.Lib.Helper
         {
             if (!System.IO.Directory.Exists(Folder))
             {
-                return 0; 
+                return 0;
             }
             if (Recursive)
             {
@@ -1011,7 +1011,7 @@ namespace Kooboo.Lib.Helper
         public static void WriteAllBytes(string FilePath, byte[] bytes)
         {
             Lib.Helper.IOHelper.EnsureFileDirectoryExists(FilePath);
-            System.IO.File.WriteAllBytes(FilePath, bytes); 
+            System.IO.File.WriteAllBytes(FilePath, bytes);
         }
 
         public static void Copy(string oldPath, string newPath)
@@ -1019,9 +1019,9 @@ namespace Kooboo.Lib.Helper
             if (System.IO.File.Exists(oldPath))
             {
                 Lib.Helper.IOHelper.EnsureFileDirectoryExists(newPath);
-                System.IO.File.Copy(oldPath, newPath); 
+                System.IO.File.Copy(oldPath, newPath);
             }
-        }        
+        }
 
         public static bool IsDirectory(string path)
         {
@@ -1032,14 +1032,51 @@ namespace Kooboo.Lib.Helper
                 return false;
             }
 
-             parts = parts.Reverse().ToArray(); 
+            parts = parts.Reverse().ToArray();
 
             if (parts[0].Contains("."))
             {
                 return false;
             }
             return true;
-        }  
+        }
+
+
+        public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
+        {
+            // Get the subdirectories for the specified directory.
+            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
+
+            if (!dir.Exists)
+            {
+                return;
+            }
+
+            DirectoryInfo[] dirs = dir.GetDirectories();
+            // If the destination directory doesn't exist, create it.
+            if (!Directory.Exists(destDirName))
+            {
+                Directory.CreateDirectory(destDirName);
+            }
+
+            // Get the files in the directory and copy them to the new location.
+            FileInfo[] files = dir.GetFiles();
+            foreach (FileInfo file in files)
+            {
+                string temppath = Path.Combine(destDirName, file.Name);
+                file.CopyTo(temppath, false);
+            }
+
+            // If copying subdirectories, copy them and their contents to new location.
+            if (copySubDirs)
+            {
+                foreach (DirectoryInfo subdir in dirs)
+                {
+                    string temppath = Path.Combine(destDirName, subdir.Name);
+                    DirectoryCopy(subdir.FullName, temppath, copySubDirs);
+                }
+            }
+        }
 
     }
 }

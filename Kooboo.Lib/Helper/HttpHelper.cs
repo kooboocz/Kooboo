@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -13,11 +15,23 @@ namespace Kooboo.Lib.Helper
     {
         static HttpHelper()
         {
-            ServicePointManager.ServerCertificateValidationCallback += CheckValidationResult;
-            //turn on tls12 and tls11,default is ssl3 and tls
+            //ServicePointManager.ServerCertificateValidationCallback += CheckValidationResult;
+            ////turn on tls12 and tls11,default is ssl3 and tls
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11;
+            SetCustomSslChecker();
         }
-         
+
+        public static bool HasSetCustomSSL { get; set; }
+
+        public static void SetCustomSslChecker()
+        {
+            if (!HasSetCustomSSL)
+            {
+                ServicePointManager.ServerCertificateValidationCallback += CheckValidationResult;
+                HasSetCustomSSL = true;
+            }
+        }
+
         private static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
         {
             //make self signed cert ,so not validate cert in client
@@ -30,7 +44,7 @@ namespace Kooboo.Lib.Helper
         {
             if (string.IsNullOrEmpty(response))
             {
-                return default(T); 
+                return default(T);
             }
 
             var jobject = Lib.Helper.JsonHelper.DeserializeJObject(response);
@@ -67,7 +81,7 @@ namespace Kooboo.Lib.Helper
         {
             try
             {
-                var postString = String.Join("&", parameters.Select(it => String.Concat(it.Key, "=", System.Net.WebUtility.UrlEncode(it.Value))));
+                var postString = String.Join("&", parameters.Select(it => String.Concat(it.Key, "=", Uri.EscapeDataString(it.Value))));
                 var postData = Encoding.UTF8.GetBytes(postString);
                 using (var client = new WebClient())
                 {
@@ -91,7 +105,44 @@ namespace Kooboo.Lib.Helper
             }
             return default(T);
         }
-      
+
+        public static T Post<T>(string url, Dictionary<string, string> Headers, byte[] postBytes, string UserName = null, string Password = null)
+        {
+            if (!string.IsNullOrEmpty(UserName))
+            {
+                if (Headers == null)
+                {
+                    Headers = new Dictionary<string, string>();
+                }
+                var bytes = Encoding.UTF8.GetBytes(String.Format("{0}:{1}", UserName, Password));
+                Headers.Add("Authorization", "Basic " + Convert.ToBase64String(bytes));
+            }
+            using (var client = new WebClient())
+            {
+                client.Headers.Add("user-agent", DefaultUserAgent);
+                client.Headers.Add("Content-Type", "multipart/form-data");
+                if (Headers != null)
+                {
+                    foreach (var item in Headers)
+                    {
+                        client.Headers.Add(item.Key, item.Value);
+                    }
+                }
+
+                try
+                {
+                    var responseData = client.UploadData(url, "POST", postBytes);
+
+                    return ProcessApiResponse<T>(Encoding.UTF8.GetString(responseData));
+                }
+                catch (Exception ex)
+                {
+
+                }
+                return default(T);
+            }
+        }
+
         public static byte[] ConvertKooboo(string url, byte[] data, Dictionary<string, string> headers, string UserName = null, string Password = null)
         {
             try
@@ -119,17 +170,16 @@ namespace Kooboo.Lib.Helper
             }
             return null;
         }
-          
+
         public static T Post<T>(string url, string json)
         {
             try
             {
-                json = System.Net.WebUtility.UrlEncode(json);
+                json = System.Net.WebUtility.UrlEncode(json);  ///????? What is this????
                 var postData = Encoding.UTF8.GetBytes(json);
                 using (var client = new WebClient())
                 {
                     client.Proxy = null;
-
                     client.Headers.Add("user-agent", DefaultUserAgent);
                     client.Headers.Add("Content-Type", "application/x-www-form-urlencoded");
 
@@ -149,8 +199,9 @@ namespace Kooboo.Lib.Helper
         {
             if (query != null)
             {
-                url = UrlHelper.AppendQueryString(url, query);
+                url = UrlHelper.AppendQueryString(url, query); 
             }
+
             using (var client = new WebClient())
             {
                 client.Headers.Add("user-agent", DefaultUserAgent);
@@ -167,6 +218,86 @@ namespace Kooboo.Lib.Helper
 
                 return ProcessApiResponse<T>(backstring);
             }
+        }
+         
+        public static string GetString(string url)
+        {
+            try
+            {
+                using (var client = new WebClient())
+                {
+                    client.Headers.Add("user-agent", DefaultUserAgent);
+
+                    client.Proxy = null;
+                    client.Encoding = Encoding.UTF8;
+
+                    return client.DownloadString(url);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return null;
+        }
+
+
+        public static async Task<string> GetStringAsync(string url, Dictionary<string, string> query = null)
+        {
+            try
+            {
+
+                if (query != null)
+                {
+                    url = UrlHelper.AppendQueryString(url, query);
+                }
+
+                using (var client = new WebClient())
+                {
+                    client.Headers.Add("user-agent", DefaultUserAgent);
+
+                    client.Proxy = null;
+                    client.Encoding = Encoding.UTF8;
+
+                  return  await client.DownloadStringTaskAsync(new Uri(url));
+                }
+            }
+            catch (Exception ex)
+            { 
+
+            } 
+
+            return null;
+        }
+
+
+        public static T TryGet<T>(string url, Dictionary<string, string> query = null)
+        {
+            if (query != null)
+            {
+                url = UrlHelper.AppendQueryString(url, query);
+            }
+
+            try
+            {
+                using (var client = new WebClient())
+                {
+                    client.Headers.Add("user-agent", DefaultUserAgent);
+
+                    client.Proxy = null;
+                    client.Encoding = Encoding.UTF8;
+
+                    var backstring = client.DownloadString(url);
+
+                    return ProcessApiResponse<T>(backstring);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return default(T);
         }
 
         public static async Task<T> GetAsync<T>(string url, Dictionary<string, string> headers = null, Dictionary<string, string> query = null)
@@ -200,6 +331,23 @@ namespace Kooboo.Lib.Helper
                 return result;
             }
         }
+
+
+        public static async Task<T> TryGetAsync<T>(string url, Dictionary<string, string> headers = null, Dictionary<string, string> query = null)
+        {
+
+            try
+            {
+                return await GetAsync<T>(url, headers, query);
+            }
+            catch (Exception ex)
+            {
+                return default(T);
+            }
+
+
+        }
+
 
         public static bool PostData(string url, Dictionary<string, string> Headers, byte[] PostBytes, string UserName = null, string Password = null)
         {
@@ -240,6 +388,6 @@ namespace Kooboo.Lib.Helper
                 return success;
             }
         }
-         
-    } 
+
+    }
 }

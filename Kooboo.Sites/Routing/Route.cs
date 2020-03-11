@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using Kooboo.Extensions; 
 
@@ -25,7 +27,7 @@ namespace Kooboo.Sites.Routing
                _name = value;
                 if (!string.IsNullOrEmpty(_name))
                 {
-                  //_name = Lib.Helper.StringHelper.ToValidFileName(_name); 
+                   //_name = Lib.Helper.StringHelper.ToValidFileName(_name); 
                     if (_name.StartsWith("\\"))
                     {
                         _name = "/" + _name.Substring(1); 
@@ -33,7 +35,8 @@ namespace Kooboo.Sites.Routing
                     if (!_name.StartsWith("/"))
                     {
                         _name = "/" + _name;
-                    }
+                    } 
+                    _name = System.Net.WebUtility.UrlDecode(_name); 
                 } 
             }
         }

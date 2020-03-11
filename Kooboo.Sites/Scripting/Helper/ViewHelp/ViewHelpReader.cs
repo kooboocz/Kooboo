@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -92,11 +94,8 @@ namespace Kooboo.Sites.Scripting
 
         private static string GetPath()
         {
-#if DEBUG
-            var path = Path.GetFullPath(@"..\..\..\Kooboo.Web\_Admin\help\kView");
-#else
-            var path= Path.GetFullPath(@".\_Admin\help\kView");
-#endif
+            var path = Kooboo.Lib.Compatible.CompatibleManager.Instance.System.CombinePath(Kooboo.Data.AppSettings.RootPath, @"_Admin\help\kView");
+
             return path;
         }
         

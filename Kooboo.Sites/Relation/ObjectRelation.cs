@@ -1,4 +1,6 @@
-﻿using Kooboo.Extensions;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +16,10 @@ namespace Kooboo.Sites.Relation
     /// </summary>
     public class ObjectRelation : Kooboo.Sites.Models.SiteObject
     {
+        public ObjectRelation()
+        {
+            this.ConstType = ConstObjectType.ObjectRelation; 
+        }
 
         private Guid _id;
         public override Guid Id

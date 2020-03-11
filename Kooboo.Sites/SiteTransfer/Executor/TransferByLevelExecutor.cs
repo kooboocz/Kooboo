@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq; 
 using System.Threading.Tasks;
@@ -14,6 +16,8 @@ namespace Kooboo.Sites.SiteTransfer.Executor
         public SiteDb SiteDb { get; set; }
 
         public TransferTask TransferTask { get; set; }
+
+        private HashSet<Guid> DoneUrlHash = new HashSet<Guid>(); 
 
         public async Task Execute()
         {
@@ -68,6 +72,7 @@ namespace Kooboo.Sites.SiteTransfer.Executor
             while (true)
             {
                 List<TransferPage> pagelist = query.SelectAll();
+                pagelist.RemoveAll(o => DoneUrlHash.Contains(o.Id)); 
                 if (pagelist == null || pagelist.Count == 0)
                 {
                     if (progress.counter < progress.TotalPages && lowerPriorityPages.Count()>0)
@@ -91,6 +96,8 @@ namespace Kooboo.Sites.SiteTransfer.Executor
 
                 foreach (var item in pagelist)
                 {
+                    DoneUrlHash.Add(item.Id); 
+
                     var down =  await DownloadHelper.DownloadUrlAsync(item.absoluteUrl, manager.CookieContainer);
 
                     siteDb.TransferTasks.UpdateCookie(progress.TaskId, manager.CookieContainer); 

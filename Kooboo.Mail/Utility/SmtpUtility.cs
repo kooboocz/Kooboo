@@ -1,18 +1,21 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Caching;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks; 
 using DNS.Client;
 using DNS.Protocol.ResourceRecords;
+using System.Configuration;
 
 namespace Kooboo.Mail.Utility
 {
    public static class SmtpUtility
-    {
+    {  
+
         public static string GetString(byte[] data)
         {
             var encodingresult = Lib.Helper.EncodingDetector.GetEmailEncoding(data);
@@ -50,53 +53,7 @@ namespace Kooboo.Mail.Utility
             } 
             return null; 
         }
-                  
-        
-        public static async Task<SendSetting> GetSendSetting(Data.Models.ServerSetting serverSetting, bool IsOnlineServer,  string MailFrom, string RcptTo)
-        {
-          
-            SendSetting setting = new SendSetting();
-
-            if (IsOnlineServer && !serverSetting.CanDirectSendEmail)
-            { 
-                setting.UseKooboo = true;
-                setting.KoobooServerIp = serverSetting.SmtpServerIP;
-                setting.Port = serverSetting.SmtpPort;
-                setting.HostName = System.Net.Dns.GetHostName();
-                setting.LocalIp = System.Net.IPAddress.Any;
-                setting.OkToSend = true;  
-            }
-           else
-            { 
-                var mxs = await Kooboo.Mail.Utility.SmtpUtility.GetMxRecords(RcptTo); 
-                if (mxs == null || mxs.Count() ==0)
-                {
-                    setting.OkToSend = false;
-                    setting.ErrorMessage = "Mx records not found";
-                }
-                else
-                {
-                    setting.OkToSend = true;
-                    setting.Mxs = mxs; 
-
-                    if (serverSetting.ReverseDns !=null && serverSetting.ReverseDns.Count()>0)
-                    {          
-                        var dns = serverSetting.ReverseDns[0];  //TODO: random it.  
-                        setting.LocalIp =  System.Net.IPAddress.Parse(dns.IP);
-                        setting.HostName = dns.HostName; 
-                    }
-                    else
-                    {
-                        setting.LocalIp = System.Net.IPAddress.Any;
-                        setting.HostName = System.Net.Dns.GetHostName(); 
-                    } 
-                } 
-            } 
-            return setting; 
-        }
-
-       
-         
+                 
     }
 
 
@@ -104,6 +61,8 @@ namespace Kooboo.Mail.Utility
     {
         public static TimeSpan MXCacheExpire = TimeSpan.FromHours(1);
         private static object mxResolveLock = new object();
+
+        private static Dictionary<string, CacheItem> DefaultCache = new Dictionary<string, CacheItem>();
 
         static DnsLookup()
         {
@@ -127,18 +86,36 @@ namespace Kooboo.Mail.Utility
         public static async Task<string[]> ResolveCachedMX(string domainName)
         {
             var key = "MXCache_" + domainName;
-            var mxsItem = MemoryCache.Default.Get(key) as CacheItem;
-            if (mxsItem == null)
+            CacheItem mxsItem = null;
+            if(DefaultCache.ContainsKey(key))
+            {
+                mxsItem = DefaultCache[key];
+            }
+
+            if (mxsItem == null || mxsItem.CacheTime.Add(MXCacheExpire)>DateTime.UtcNow)
             {
                 var mxs = await ResolveMX(domainName);
-                mxsItem = new CacheItem
+                
+                lock (mxResolveLock)
                 {
-                    MXs = mxs
-                };
-                MemoryCache.Default.Add(key, mxsItem, new CacheItemPolicy
-                {
-                    AbsoluteExpiration = DateTime.UtcNow.Add(MXCacheExpire),
-                });
+                    if (mxsItem == null || mxsItem.CacheTime.Add(MXCacheExpire) > DateTime.UtcNow)
+                    {
+                        mxsItem = new CacheItem
+                        {
+                            MXs = mxs,
+                            CacheTime = DateTime.UtcNow
+                        };
+                        if (DefaultCache.ContainsKey(key))
+                        {
+                            DefaultCache[key] = mxsItem;
+                        }
+                        else
+                        {
+                            DefaultCache.Add(key, mxsItem);
+                        }
+                    }
+                        
+                }
                 return mxs;
             }
             return mxsItem.MXs;
@@ -209,26 +186,9 @@ namespace Kooboo.Mail.Utility
         class CacheItem
         {
             public string[] MXs { get; set; }
+
+            public DateTime CacheTime { get; set; }
         }
     }
-
-
-    public class SendSetting
-    {
-        public bool  OkToSend { get; set; }
-
-        public string ErrorMessage { get; set; }
-
-        public string HostName { get; set; }
-
-        public System.Net.IPAddress LocalIp { get; set; }
-
-        public bool UseKooboo { get; set; }
-
-        public int Port { get; set; } = 25; 
-
-        public string KoobooServerIp { get; set; }
-
-        public List<string> Mxs { get; set; }
-    }
+     
 }

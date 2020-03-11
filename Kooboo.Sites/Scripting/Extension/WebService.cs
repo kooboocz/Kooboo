@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +11,7 @@ using System.Xml;
 using System.IO;
 using System.Net;
 using Newtonsoft.Json;
+using Kooboo.Data.Attributes;
 
 namespace Kooboo.Sites.Scripting.Extension
 {
@@ -24,6 +27,7 @@ namespace Kooboo.Sites.Scripting.Extension
         }
 
         [Attributes.SummaryIgnore]
+        [KIgnore]
         public RenderContext context { get; set; }
 
         public string call(string url, string methodName,object data,string ns = "http://tempuri.org/")

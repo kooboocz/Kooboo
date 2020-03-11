@@ -1,12 +1,9 @@
-﻿using Kooboo.Sites.Models;
-using Kooboo.Sites.Service;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Models;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Kooboo.Lib.Helper;
-using Kooboo.Sites.Routing;
 using Kooboo.Extensions;
-using Kooboo.Sites.Repository; 
 
 namespace Kooboo.Sites.SiteTransfer
 {
@@ -14,11 +11,11 @@ namespace Kooboo.Sites.SiteTransfer
     {
         public void Execute(AnalyzerContext Context)
         {
-           // Dictionary<string, bool> ImageUrlsToDownload = new Dictionary<string, bool>();  
-
-            foreach (var item in Context.Dom.images.item)
+            var imgurls = Kooboo.Sites.Service.DomUrlService.GetImageSrcs(Context.Dom); 
+           
+            foreach (var item in imgurls)
             {
-                string itemsrc = DomUrlService.GetLinkOrSrc(item);
+                string itemsrc = item.Value;
 
                 if (!string.IsNullOrEmpty(itemsrc))
                 {
@@ -45,26 +42,24 @@ namespace Kooboo.Sites.SiteTransfer
                                 Context.SiteDb.Routes.AddOrUpdate(url, ConstObjectType.Image, koobooimage.Id, Context.DownloadManager.UserId);
 
                                 Context.SiteDb.Images.AddOrUpdate(koobooimage, Context.DownloadManager.UserId);
-                                 
 
-                                string oldstring = item.OuterHtml;
+
+                                string oldstring = item.Key.OuterHtml;
 
                                 string newstring = oldstring.Replace(itemsrc, url);
 
                                 Context.Changes.Add(new AnalyzerUpdate()
                                 {
-                                    StartIndex = item.location.openTokenStartIndex,
-                                    EndIndex = item.location.openTokenEndIndex,
+                                    StartIndex = item.Key.location.openTokenStartIndex,
+                                    EndIndex = item.Key.location.openTokenEndIndex,
                                     NewValue = newstring
                                 });
-
-
+                                 
                             }
                             else
                             {
                                 // TODO: other encoding not implemented yet. 
-                            }
-
+                            } 
                         }
 
                         continue;
@@ -76,23 +71,23 @@ namespace Kooboo.Sites.SiteTransfer
                         string absoluteUrl = Kooboo.Lib.Helper.UrlHelper.Combine(Context.AbsoluteUrl, itemsrc);
 
                         bool issamehost = Kooboo.Lib.Helper.UrlHelper.isSameHost(absoluteUrl, Context.OriginalImportUrl);
-                         
-                        string relativeurl = EnsureUrlWithoutQuestionMark(UrlHelper.RelativePath(absoluteUrl, issamehost));
+
+                        string relativeurl = EusureUrl(UrlHelper.RelativePath(absoluteUrl, issamehost));
 
                         if (itemsrc != relativeurl)
                         {
-                            string oldstring = item.OuterHtml;
+                            string oldstring = item.Key.OuterHtml;
 
                             string newstring = oldstring.Replace(itemsrc, relativeurl);
 
                             Context.Changes.Add(new AnalyzerUpdate()
                             {
-                                StartIndex = item.location.openTokenStartIndex,
-                                EndIndex = item.location.openTokenEndIndex,
+                                StartIndex = item.Key.location.openTokenStartIndex,
+                                EndIndex = item.Key.location.openTokenEndIndex,
                                 NewValue = newstring
                             });
                         }
-                          
+
                         Context.DownloadManager.AddTask(new Download.DownloadTask()
                         {
                             AbsoluteUrl = absoluteUrl,
@@ -103,26 +98,26 @@ namespace Kooboo.Sites.SiteTransfer
 
                     }
                 }
-            }  
-        } 
+            }
+        }
 
-        public string EnsureUrlWithoutQuestionMark(string relativeUrl)
+        public string EusureUrl(string relativeUrl)
         {
             if (string.IsNullOrEmpty(relativeUrl))
             {
-                return null; 
+                return null;
             }
 
-            if (relativeUrl.IndexOf("?")>-1)
-            {
-                return relativeUrl.Replace("?", "/"); 
-            } 
-            else
-            {
-                return relativeUrl; 
-            }  
+            return System.Net.WebUtility.UrlDecode(relativeUrl);  
+            //if (relativeUrl.IndexOf("?") > -1)
+            //{
+            //    return relativeUrl.Replace("?", "/");
+            //}
+            //else
+            //{
+            //    return relativeUrl;
+            //}
         }
-    }
      
-
+    } 
 }

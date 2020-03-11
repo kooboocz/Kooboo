@@ -1,4 +1,7 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Render.Response;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,8 +9,12 @@ namespace Kooboo.Render
 {
     public class RenderOption
     {
+
+        public Action<Kooboo.Data.Context.RenderContext, RenderRespnose> Log { get; set; }
+
         private Func<Kooboo.Data.Context.RenderContext, string> _GetDbPath;
-        public Func<Kooboo.Data.Context.RenderContext, string> GetDbPath {
+        public Func<Kooboo.Data.Context.RenderContext, string> GetDbPath
+        {
             get
             {
                 return _GetDbPath == null ? DefaultOptions.DefaultGetDbPath : _GetDbPath;
@@ -20,7 +27,8 @@ namespace Kooboo.Render
 
         private Func<Kooboo.Data.Context.RenderContext, string> _GetRoot;
 
-        public Func<Kooboo.Data.Context.RenderContext, string> GetDiskRoot {
+        public Func<Kooboo.Data.Context.RenderContext, string> GetDiskRoot
+        {
             get
             {
                 return _GetRoot == null ? DefaultOptions.DefaultGetRoot : _GetRoot;
@@ -45,8 +53,11 @@ namespace Kooboo.Render
             }
         }
 
+        public Func<Data.Context.RenderContext, string, ResponseBase> Render { get; set; }
+
         private string _layoutfolder;
-        public string LayoutFolder {
+        public string LayoutFolder
+        {
             get
             {
                 if (string.IsNullOrEmpty(_layoutfolder))
@@ -62,6 +73,46 @@ namespace Kooboo.Render
             set
             {
                 _layoutfolder = value;
+            }
+        }
+        private string _Extension;
+        public string Extension
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_Extension))
+                {
+                    _Extension = GetAppSetting("Extension");
+                    if (string.IsNullOrEmpty(_Extension))
+                    {
+                        _Extension = DefaultOptions.DefaultExtension;
+                    }
+                }
+                return _Extension;
+            }
+            set
+            {
+                _Extension = value;
+            }
+        }
+
+        private List<string> _Extensions;
+        internal List<string> Extensions
+        {
+            get
+            {
+                if (_Extensions == null)
+                {
+                    _Extensions = new List<string>();
+                    foreach (var item in Extension.Split(',').ToList())
+                    {
+                        if (!string.IsNullOrEmpty(item))
+                        {
+                            _Extensions.Add(item.Trim());
+                        }
+                    }
+                }
+                return _Extensions;
             }
         }
 
@@ -127,7 +178,8 @@ namespace Kooboo.Render
 
         private string _startPath;
         // the prefix path that should be ignored.  
-        public string StartPath {
+        public string StartPath
+        {
             get
             {
                 return _startPath;
@@ -163,25 +215,29 @@ namespace Kooboo.Render
         public bool EnableMultilingual { get; set; }
 
         public bool EnableRenderCache { get; set; }
- 
+
         public string MultilingualJsFile { get; set; }
+
+
     }
 
     public static class DefaultOptions
     {
         public static string DefaultLayoutFolder = "_layout";
 
-        public static string DefaultViewFolder = "_view"; 
+        public static string DefaultViewFolder = "_view";
+
+        public static string DefaultExtension = "html,cshtml";
 
         public static string DefaultGetRoot(Kooboo.Data.Context.RenderContext request)
         {
             string ExecutingFolder = AppDomain.CurrentDomain.BaseDirectory;
-            return System.IO.Path.Combine(ExecutingFolder, @"..\") ;
+            return System.IO.Path.Combine(ExecutingFolder, @"..\");
         }
-           
+
         public static string DefaultGetDbPath(Kooboo.Data.Context.RenderContext request)
         {
-            string ExecutingFolder = AppDomain.CurrentDomain.BaseDirectory; 
+            string ExecutingFolder = AppDomain.CurrentDomain.BaseDirectory;
             return System.IO.Path.Combine(ExecutingFolder, @"..\_renderdata");
         }
 
@@ -189,16 +245,16 @@ namespace Kooboo.Render
         {
             if (string.IsNullOrEmpty(Options.StartPath))
             {
-                return true; 
+                return true;
             }
 
-            string RelativeUrl = context.Request.RawRelativeUrl; 
+            string RelativeUrl = context.Request.RawRelativeUrl;
 
             if (RelativeUrl.ToLower().StartsWith(Options.StartPath.ToLower()))
             {
-                return true; 
-            } 
-            return false; 
+                return true;
+            }
+            return false;
         }
     }
 }

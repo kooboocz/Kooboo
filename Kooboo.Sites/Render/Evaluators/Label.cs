@@ -1,11 +1,8 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Kooboo.Data.Context;
 using Kooboo.Dom;
-using Kooboo.Sites.Extensions;
+using Kooboo.Sites.DataTraceAndModify.CustomTraces;
 
 namespace Kooboo.Sites.Render
 {
@@ -33,32 +30,30 @@ namespace Kooboo.Sites.Render
                     LabelName = item.name;
                     break;
                 }
-            } 
+            }
             if (!string.IsNullOrEmpty(LabelName))
             {
-              var response = new EvaluatorResponse(); 
-                List<IRenderTask> result = new List<IRenderTask>();
-                string value = element.getAttribute(LabelName); 
+                var response = new EvaluatorResponse();
+                var result = new List<IRenderTask>();
+                string value = element.getAttribute(LabelName);
+                element.removeAttribute(LabelName);
 
-                if (!options.RequireBindingInfo)
+                if (options.RequireBindingInfo)
                 {
-                    element.removeAttribute(LabelName); 
+                    if (response.BindingTask == null) response.BindingTask = new List<IRenderTask>();
+                    var traceability = new ComponentTrace(value, "label");
+                    var bindingTask = new BindingRenderTask(traceability);
+                    response.BindingTask.Add(bindingTask);
+                    if (response.EndBindingTask == null) response.EndBindingTask = new List<IRenderTask>();
+                    response.EndBindingTask.Add(bindingTask.BindingEndRenderTask);
                 }
-                else
-                {
-                    string koobooid = element.getAttribute("kooboo-id");
-                    BindingObjectRenderTask binding = new BindingObjectRenderTask() { ObjectType = "Label", AttributeName = LabelName, BindingValue = value, KoobooId = koobooid };
-                    List<IRenderTask> bindings = new List<IRenderTask>();
-                    bindings.Add(binding);
-                    response.BindingTask = bindings;
-                }
-                 
+
                 result.Add(new LabelRenderTask(value));
                 response.ContentTask = result;
-                return response;   
-            } 
-            return null;  
+                return response;
+            }
+            return null;
         }
     }
-    
+
 }

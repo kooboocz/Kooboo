@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB.Helper;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB.Helper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,8 +140,7 @@ namespace Kooboo.IndexedDB.Serializer.Simple.FieldConverter
                 currentposition += len;
             }
 
-            return BackValue;
-             
+            return BackValue; 
         }
 
         private List<IFieldConverter> Items

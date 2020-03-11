@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using LumiSoft.Net.MIME;
 using System;
 using System.Collections.Generic;
@@ -87,6 +89,25 @@ namespace Kooboo.Mail.Utility
                 if (item.ContentType != null)
                 {
                     if (Lib.Helper.StringHelper.IsSameValue(item.ContentType.Type, "text") && Lib.Helper.StringHelper.IsSameValue(item.ContentType.SubType, "plain"))
+                    {
+                        var btext = item.Body as MIME_b_Text;
+                        if (btext != null)
+                        {
+                            return btext.Text;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        internal static string GetAnyTextBody(MIME_Message MimeMsg)
+        {
+            foreach (var item in MimeMsg.AllEntities)
+            {
+                if (item.ContentType != null)
+                {
+                    if (Lib.Helper.StringHelper.IsSameValue(item.ContentType.Type, "text"))
                     {
                         var btext = item.Body as MIME_b_Text;
                         if (btext != null)

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,6 +23,10 @@ namespace Kooboo.Web.ViewModel
         public Guid KeyHash { get; set; }
 
         public int StoreNameHash { get; set; } 
+
+        public int TableNameHash { get; set; }
+
+        public string TableName { get; set; }
         /// <summary>
         /// insert, update, delete. 
         /// </summary>

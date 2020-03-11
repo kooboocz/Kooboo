@@ -1,7 +1,8 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Collections;
 
 namespace Kooboo
 {
@@ -18,9 +19,9 @@ namespace Kooboo
         public const byte View = 10;
         public const byte HtmlBlock = 11;
         public const byte CssRule = 13;
-        public const byte File = 14;
+        public const byte CmsFile = 14;
         public const byte Route = 15;
-        public const byte Relation = 16;
+        public const byte ObjectRelation = 16;
         public const byte Image = 17;
         public const byte TextContent = 18;
         public const byte Binding = 19;
@@ -30,7 +31,7 @@ namespace Kooboo
         public const byte ContentFolder = 24;
         public const byte Domain = 25;
         public const byte UserGroup = 26;
-        // public const byte SyncItem = 27; 
+        //public const byte SyncItem = 27; 
         public const byte ExternalResource = 28;
         public const byte Thumbnail = 29;
         public const byte Folder = 30;
@@ -54,87 +55,40 @@ namespace Kooboo
 
         public const byte SiteCluster = 48;
 
+        public const byte ContinueConverter = 49;
+
         public const byte FormSetting = 50;
 
-        // public const byte KScript = 52;
+        public const byte RolePermission = 51;
 
+        public const byte TransferTask = 53;
+        public const byte TransferPage = 54;
         public const byte SiteUser = 55;
 
         public const byte Code = 58;
 
+        public const byte CoreSetting = 59;
+
         public const byte BusinessRule = 65;
 
+        public const byte Order = 68;
+        public const byte OrderDetail = 69;
         public const byte Product = 70;
         public const byte Cateogry = 71;
         public const byte ProductCategory = 72;
         public const byte ProductVariants = 73;
         public const byte ProductType = 74;
-                                           
+        public const byte PaymentCallback = 76;
+        public const byte PaymentRequest = 77;
+        public const byte Customer = 78;
+        public const byte ShippingAddress = 79;
 
-        public const byte kfile = 80; 
 
-        private static Dictionary<string, byte> _Types;
+        public const byte kfile = 80;
+        public const byte Kconfig = 81;
 
-        private static object _locker = new object();
+        public const byte TableRelation = 82;
 
-        public static Dictionary<string, byte> Types
-        {
-            get
-            {
-                if (_Types == null)
-                {
-                    lock (_locker)
-                    {
-                        if (_Types == null)
-                        {
-                            _Types = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-
-                            var allfields = typeof(ConstObjectType).GetFields(BindingFlags.Static | BindingFlags.Public);
-
-                            var instance = Activator.CreateInstance(typeof(ConstObjectType));
-
-                            foreach (var item in allfields)
-                            {
-                                var value = item.GetValue(instance);
-                                var bytevalue = Convert.ToByte(value);
-                                if (bytevalue != 0)
-                                {
-                                    _Types.Add(item.Name, bytevalue);
-                                }
-                            }
-                        }
-
-                    }
-                }
-
-                return _Types;
-            }
-        }
-
-        public static byte GetByte(string constName)
-        {
-            if (string.IsNullOrEmpty(constName))
-            {
-                return 0;
-            }
-
-            if (Types.ContainsKey(constName))
-            {
-                return Types[constName];
-            }
-            return 0;
-        }
-
-        public static string GetName(byte constType)
-        {
-            foreach (var item in Types)
-            {
-                if (item.Value == constType)
-                {
-                    return item.Key;
-                }
-            }
-            return null;
-        }
+        public const byte DatabaseTable = 83;
     }
 }

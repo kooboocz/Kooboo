@@ -1,4 +1,7 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
+using Kooboo.Data.Helper;
 using Kooboo.Data.Models;
 using Kooboo.Data.ViewModel;
 using Kooboo.Sites.Extensions;
@@ -78,7 +81,7 @@ namespace Kooboo.Web.Api.Implementation
                 dc.Name = Data.Language.Hardcoded.GetValue("Root", call.Context);
                 dc.DisplayName = Data.Language.Hardcoded.GetValue("Root", call.Context);
                 dc.Ip = "127.0.0.1";
-                dc.Port = Data.AppSettings.CurrentUsedPort;
+                dc.Port = Data.AppSettings.HttpPort;
                 dc.IsSelected = true;
                 dc.IsRoot = true;
                 viewmodel.DataCenter.Add(dc);
@@ -123,7 +126,7 @@ namespace Kooboo.Web.Api.Implementation
             para.Add("SiteId", call.GetValue("SiteId"));
             para.Add("OrganizationId", user.CurrentOrgId.ToString());
 
-            var datacenterlist = Lib.Helper.HttpHelper.Get<List<DataCenter>>(Kooboo.Data.Account.Url.Cluster.GetDataCenter, para, user.UserName, user.PasswordHash.ToString());
+            var datacenterlist = Lib.Helper.HttpHelper.Get<List<DataCenter>>(AccountUrlHelper.Cluster("GetDataCenter"), para, user.UserName, user.PasswordHash.ToString());
 
             viewmodel.DataCenter = datacenterlist;
 
@@ -155,7 +158,7 @@ namespace Kooboo.Web.Api.Implementation
                 throw new Exception(Data.Language.Hardcoded.GetValue("Website not found", call.Context));
             }
 
-            if (Data.AppSettings.CurrentUsedPort != 80)
+            if (Data.AppSettings.HttpPort != 80)
             {
                 throw new Exception(Data.Language.Hardcoded.GetValue("To be a host of web cluster, your kooboo instance must be listening on port 80", call.Context));
             }
@@ -170,7 +173,7 @@ namespace Kooboo.Web.Api.Implementation
 
             Data.GlobalDb.WebSites.UpdateBoolColumn(call.Context.WebSite.Id, o => o.EnableCluster, model.EnableCluster);
 
-            if (Data.AppSettings.Global.IsOnlineServer)
+            if (Data.AppSettings.IsOnlineServer)
             {
                 // check and update the SiteInfo of EnableCluster.  
                 var siteid = call.GetValue<Guid>("SiteId");
@@ -181,7 +184,7 @@ namespace Kooboo.Web.Api.Implementation
                 }
                 // Set the website doamins and send to Account for update... 
                 // Get a list of ServerId back for sync purpose... 
-                string url = Kooboo.Data.Account.Url.Cluster.SaveSetting + "?SiteId=" + siteid.ToString() + "&OrganizatioinId=" + user.CurrentOrgId.ToString();
+                string url = AccountUrlHelper.Cluster("SaveSetting") + "?SiteId=" + siteid.ToString() + "&OrganizatioinId=" + user.CurrentOrgId.ToString();
 
                 var result = Lib.Helper.HttpHelper.Post<List<SiteClusterViewModel>>(url, Lib.Helper.JsonHelper.Serialize(model));
 

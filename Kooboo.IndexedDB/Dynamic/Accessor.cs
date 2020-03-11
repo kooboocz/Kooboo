@@ -1,4 +1,6 @@
-﻿using Kooboo.IndexedDB.Helper;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.IndexedDB.Helper;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -99,6 +101,18 @@ namespace Kooboo.IndexedDB.Dynamic
             }
 
             return result;
+        }
+
+
+        public static  T ChangeType<T>(object value)
+        {
+            var type = typeof(T);
+            var newvalue = ChangeType(value, type); 
+            if (newvalue != null)
+            {
+                return (T)newvalue; 
+            }
+            return default(T); 
         }
 
         public static object GetValue(IDictionary<string, object> Dynamic, string FieldName, Type ClrType)

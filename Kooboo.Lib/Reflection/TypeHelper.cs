@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -313,12 +315,7 @@ namespace Kooboo.Lib.Reflection
             }
             return result;
         }
-
-        /// <summary>
-        /// Test if this is a dictionary... 
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
+         
         public static bool IsDictionary(Type type)
         {
             if (!type.IsGenericType)
@@ -349,7 +346,7 @@ namespace Kooboo.Lib.Reflection
             return false;
         }
 
-        public static bool IsCollection(Type type)
+        public static bool IsGenericCollection(Type type)
         {
             if (!type.IsGenericType)
             { return false; }
@@ -367,9 +364,24 @@ namespace Kooboo.Lib.Reflection
                         return true;
                     }
                 }
-            }
-
+            } 
             return false;
+        }
+
+        public static bool IsCollection(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                return IsGenericCollection(type); 
+            }
+            else
+            {
+                if (HasInterface(type, typeof(System.Collections.IEnumerable)))
+                {
+                    return true; 
+                }
+            }
+            return false; 
         }
 
         public static bool HasInterface(Type CheckType, Type InterfaceType)
@@ -836,24 +848,7 @@ namespace Kooboo.Lib.Reflection
 
             return Expression.Lambda<Action<object, object[]>>(methodCall, instanceParam, argsParam).Compile();
         }
-
-        public static bool IsJson(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-            {
-                return false;
-            }
-
-            if (input.Contains("{") && input.Contains("}") && input.Contains(":"))
-            {
-                return true;
-            }
-            if (input.Contains("[") && input.Contains("]"))
-            {
-                return true;
-            }
-            return false;
-        }
+         
 
 
         public static bool IsFieldType(Type type)
@@ -1009,6 +1004,31 @@ namespace Kooboo.Lib.Reflection
                 return new List<FieldInfo>(); 
             }
         }
+
+
+        public static MethodInfo GetMethodInfo(Type type, string methodname)
+        {
+            var method = type.GetMethod(methodname);
+            if (method != null)
+            {
+                return method;
+            }
+
+            var lowername = methodname.ToLower();
+
+            var allmethods = Kooboo.Lib.Reflection.TypeHelper.GetPublicMethods(type);
+            foreach (var item in allmethods)
+            {
+                if (item.Name.ToLower() == lowername)
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
+         
 
     }
 }

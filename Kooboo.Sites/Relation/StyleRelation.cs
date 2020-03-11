@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using Kooboo.Dom;
 using Kooboo.Dom.CSS;
@@ -67,7 +69,7 @@ namespace Kooboo.Sites.Relation
                             if (oldrelations.Count == 1 && oldrelations[0].objectYId == routeid && oldrelations[0].ConstTypeY == ConstObjectType.Route)
                             {
                                 // the relation already there. 
-                                return;
+                                continue;
                             }
 
                             foreach (var relation in oldrelations)

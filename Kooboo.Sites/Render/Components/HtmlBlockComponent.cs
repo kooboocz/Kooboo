@@ -1,10 +1,13 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kooboo.Sites.Contents.Models;
 using Kooboo.Sites.Repository;
 using Kooboo.Data.Context;
 using Kooboo.Sites.Extensions;
+using Kooboo.Sites.Service;
 
 namespace Kooboo.Sites.Render.Components
 {
@@ -25,9 +28,9 @@ namespace Kooboo.Sites.Render.Components
 
         public bool IsRegularHtmlTag { get { return false; } }
 
-        public string StoreEngineName { get { return null;  } }
+        public string StoreEngineName { get { return null; } }
 
-        public byte StoreConstType { get { return ConstObjectType.HtmlBlock;  } }
+        public byte StoreConstType { get { return ConstObjectType.HtmlBlock; } }
 
         public Task<string> RenderAsync(RenderContext context, ComponentSetting settings)
         {
@@ -37,7 +40,13 @@ namespace Kooboo.Sites.Render.Components
 
                 if (htmlBlock != null)
                 {
-                    return Task.FromResult(htmlBlock.GetValue(context.Culture).ToString());
+                    var result=htmlBlock.GetValue(context.Culture).ToString();
+                    if (context.Request.Channel == RequestChannel.InlineDesign)
+                    {
+                        result = DomService.ApplyKoobooId(result);
+                    }
+
+                    return Task.FromResult(result);
                 }
             }
 
@@ -45,7 +54,7 @@ namespace Kooboo.Sites.Render.Components
         }
 
         public List<ComponentInfo> AvaiableObjects(SiteDb sitedb)
-        { 
+        {
             List<ComponentInfo> Models = new List<ComponentInfo>();
             var allblocks = sitedb.HtmlBlocks.All();
             foreach (var item in allblocks)
@@ -55,7 +64,7 @@ namespace Kooboo.Sites.Render.Components
                 comp.Name = item.Name;
                 Models.Add(comp);
             }
-            return Models; 
+            return Models;
         }
 
         public string Preview(SiteDb SiteDb, string NameOrId)
@@ -70,7 +79,7 @@ namespace Kooboo.Sites.Render.Components
 
         public string DisplayName(RenderContext Context)
         {
-            return Data.Language.Hardcoded.GetValue("HtmlBlock", Context); 
+            return Data.Language.Hardcoded.GetValue("HtmlBlock", Context);
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,18 +36,18 @@ namespace Kooboo.Mail.Multipart
                     value = Utility.HeaderUtility.EncodeField(value); 
                 }
                 
-                header += item.Key + ":" + value + "\r\n";
+                header += item.Key + ": " + value + "\r\n";
                 donevalues.Add(item.Key); 
             }
 
            if (!donevalues.Contains("Date"))
             {
-                header += "Date:" + LumiSoft.Net.MIME.MIME_Utils.DateTimeToRfc2822(DateTime.Now)+ "\r\n"; 
+                header += "Date: " + LumiSoft.Net.MIME.MIME_Utils.DateTimeToRfc2822(DateTime.Now)+ "\r\n"; 
             } 
 
            if (!donevalues.Contains("Message-ID"))
             {
-                header += "Message-ID:<" + Guid.NewGuid().ToString().Replace("-", "") + "@mail.kooboo.com>\r\n"; 
+                header += "Message-ID: <" + Guid.NewGuid().ToString().Replace("-", "") + "@mail.kooboo.com>\r\n"; 
             }
             return header; 
         }

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using Kooboo.IndexedDB;
 using Kooboo.Sites.Models;
 
@@ -6,7 +8,7 @@ namespace Kooboo.Sites.Repository
 {
     public class ExternalResourceRepository : SiteRepositoryBase<ExternalResource>
     {
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {

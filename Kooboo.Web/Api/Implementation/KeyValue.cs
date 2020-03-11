@@ -1,5 +1,8 @@
-﻿using Kooboo.Api;
-using Kooboo.Sites.Scripting.Global; 
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
+using Kooboo.Sites.Scripting.Global;
+using KScript;
 using System.Collections.Generic; 
 
 namespace Kooboo.Web.Api.Implementation
@@ -29,7 +32,7 @@ namespace Kooboo.Web.Api.Implementation
 
             foreach (var item in store)
             {
-                allvalues.Add(item.Key, item.Value); 
+                allvalues.Add(item.Key, item.Value?.ToString()); 
             }
             return allvalues;  
         }
@@ -37,7 +40,7 @@ namespace Kooboo.Web.Api.Implementation
         public string Get(string key, ApiCall call)
         {
             kKeyValue store = new kKeyValue(call.Context); 
-            return store.get(key); 
+            return store.get(key)?.ToString(); 
         }
 
         public void Update(string key, string value, ApiCall call)

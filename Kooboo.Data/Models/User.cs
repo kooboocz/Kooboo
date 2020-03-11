@@ -1,16 +1,11 @@
-﻿using System;
-using Kooboo.Extensions;
-using Kooboo.Data.Attributes;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System; 
 
 namespace Kooboo.Data.Models
 {
     public class User : IGolbalObject
-    {
-        public User()
-        {
-            this.ConstType = ConstObjectType.User;
-        }
-
+    { 
         private Guid _id;
         public Guid Id
         {
@@ -27,13 +22,23 @@ namespace Kooboo.Data.Models
 
         public Guid CurrentOrgId { get; set; }
 
-        // redundant. 
-        public string CurrentHostDomain { get; set; }
+ 
         // redundant
         public string CurrentOrgName { get; set; }
 
-        // Is Admin of Current Organization. 
-        public bool IsAdmin { get; set; }
+        private bool _isadmin; 
+        public bool IsAdmin {
+            get {
+                if (_isadmin)
+                {
+                    return true; 
+                }
+                return this.Id == this.CurrentOrgId; 
+            }
+            set {
+                _isadmin = value; 
+            }
+        }
 
         private string _username;
         public string UserName
@@ -45,8 +50,41 @@ namespace Kooboo.Data.Models
                 _id = default(Guid);
             }
         }
-        
-        public string EmailAddress {get;set; }
+
+        private string _emailaddress; 
+        public string EmailAddress {
+            get
+            {
+                return _emailaddress; 
+            }
+            set
+            {
+                _emailaddress = value;
+                _emailId = default(Guid); 
+            }
+
+        }
+
+        private Guid _emailId; 
+        public Guid EmailId
+        {
+            get {
+                if (_emailId == default(Guid))
+                {
+                    if (!string.IsNullOrWhiteSpace(EmailAddress))
+                    {
+                        _emailId = Lib.Security.Hash.ComputeGuidIgnoreCase(EmailAddress); 
+                    }
+                }
+                return _emailId; 
+            }
+            set
+            {
+                _emailId = value; 
+            }
+        }
+
+        public bool IsEmailVerified { get; set; }
         
         public string Password { get; set; }
 
@@ -66,9 +104,7 @@ namespace Kooboo.Data.Models
                 return String.Concat(FirstName, " ", LastName);
             }
         }
-   
-        public byte ConstType { get; set; }
-        
+     
         private string _language;
         public string Language
         {
@@ -97,15 +133,35 @@ namespace Kooboo.Data.Models
         }
 
         public string RegisterIp { get; set; }
-
-        
+         
         public string  TempRedirectUrl { get; set; }
+         
+       // public string TempServerIp { get; set; }
+
+        private DateTime _registerdate; 
+
+        public DateTime RegistrationDate {
+            get
+            {
+                if (_registerdate == default(DateTime))
+                {
+                    _registerdate = DateTime.Now; 
+                }
+                return _registerdate; 
+            }
+            set
+            {
+                _registerdate = value; 
+            } 
+        }
 
         public override int GetHashCode()
         {
-            string unique = this.CurrentHostDomain + this.CurrentOrgId.ToString() + this.CurrentOrgName;
+            string unique =  this.CurrentOrgId.ToString() + this.CurrentOrgName;
             unique += this.EmailAddress + this.FirstName + this.LastName + this.Language;
-            unique += this.Password + this.PasswordHash.ToString(); 
+            unique += this.Password + this.PasswordHash.ToString();
+            unique += this.IsEmailVerified.ToString();
+            unique += this.EmailId.ToString(); 
             return Lib.Security.Hash.ComputeIntCaseSensitive(unique);  
         }
     }

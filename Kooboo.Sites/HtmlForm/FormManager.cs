@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Lib.Reflection;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Models;
@@ -72,8 +74,8 @@ namespace Kooboo.Sites.HtmlForm
 
             string submiturl = "/_api/submit/form/" + shortformid;
 
-            string baseulr = context.WebSite.BaseUrl();
-            submiturl = Kooboo.Lib.Helper.UrlHelper.Combine(baseulr, submiturl);
+            //string baseulr = context.WebSite.BaseUrl();
+            //submiturl = Kooboo.Lib.Helper.UrlHelper.Combine(baseulr, submiturl);
 
             return submiturl; 
         }

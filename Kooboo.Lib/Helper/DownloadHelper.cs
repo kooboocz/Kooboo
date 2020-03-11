@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,6 +9,8 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Http.Headers;
+using System.IO.Compression;
+using System.Collections.Generic;
 
 namespace Kooboo.Lib.Helper
 {
@@ -14,17 +18,13 @@ namespace Kooboo.Lib.Helper
     {
         static DownloadHelper()
         {
-            ServicePointManager.ServerCertificateValidationCallback += CheckValidationResult; 
+            // ServicePointManager.ServerCertificateValidationCallback += CheckValidationResult;
             //turn on tls12 and tls11,default is ssl3 and tls
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11; 
+            HttpHelper.SetCustomSslChecker(); 
         }
+ 
 
-        private static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
-        {
-            //make self signed cert ,so not validate cert in client
-            return true;
-        }
-  
         public static byte[] DownloadFile(string absoluteUrl, string containsContentType = null)
         {
             byte[] bytes = null;
@@ -46,7 +46,7 @@ namespace Kooboo.Lib.Helper
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 downloadok = false;
             }
@@ -61,37 +61,37 @@ namespace Kooboo.Lib.Helper
             }
         }
 
-        public static async Task<byte[]> DownloadFileAsync(string absoluteUrl, System.Net.CookieContainer cookiecontainer = null,  string contenttype=null)
+        public static async Task<byte[]> DownloadFileAsync(string absoluteUrl, System.Net.CookieContainer cookiecontainer = null, string contenttype = null)
         {
-            if (contenttype !=null)
+            if (contenttype != null)
             {
-                contenttype = contenttype.ToLower(); 
+                contenttype = contenttype.ToLower();
             }
 
-            var download = await DownloadUrlAsync(absoluteUrl, cookiecontainer); 
+            var download = await DownloadUrlAsync(absoluteUrl, cookiecontainer);
 
-           if (download == null)
+            if (download == null)
             {
-                return null; 
+                return null;
             }
 
-           if (!string.IsNullOrEmpty(contenttype))
+            if (!string.IsNullOrEmpty(contenttype))
             {
-                if (download.ContentType !=null && download.ContentType.ToLower().Contains(contenttype))
+                if (download.ContentType != null && download.ContentType.ToLower().Contains(contenttype))
                 {
-                    if (download.DataBytes !=null)
+                    if (download.DataBytes != null)
                     {
-                        return download.DataBytes;  
+                        return download.DataBytes;
                     }
                 }
                 else
                 {
-                    return new byte[0]; 
+                    return new byte[0];
                 }
             }
-           else
+            else
             {
-                return download.DataBytes; 
+                return download.DataBytes;
             }
             return null;
         }
@@ -133,27 +133,28 @@ namespace Kooboo.Lib.Helper
         {
             try
             {
-                using (HttpClient client = CreateHttpClient(cookieContainer))
+                HttpClient client = HttpClientHelper.Client;
+
+                HttpClientHelper.SetCookieContainer(cookieContainer, fullUrl);
+
+                var response = await client.GetAsync(fullUrl);
+
+                if (response == null)
                 {
-                    var response = await client.GetAsync(fullUrl);
-
-                    if (response == null)
-                    {
-                        return null;
-                    }
-
-                    var statuscode = (int)response.StatusCode;
-                    if (statuscode >= 300 && statuscode <= 399)
-                    {
-                        var url = response.Headers.GetValues("Location").FirstOrDefault();
-                        if (!string.IsNullOrEmpty(url) && !url.ToLower().StartsWith("http"))
-                        {
-                            url = Lib.Helper.UrlHelper.Combine(fullUrl, url);
-                        }
-                        return await DownloadUrlAsync(url, cookieContainer);
-                    }
-                    return await ProcessResponse1(response);
+                    return null;
                 }
+
+                var statuscode = (int)response.StatusCode;
+                if (statuscode >= 300 && statuscode <= 399)
+                {
+                    var url = response.Headers.GetValues("Location").FirstOrDefault();
+                    if (!string.IsNullOrEmpty(url) && !url.ToLower().StartsWith("http"))
+                    {
+                        url = Lib.Helper.UrlHelper.Combine(fullUrl, url);
+                    }
+                    return await DownloadUrlAsync(url, cookieContainer);
+                }
+                return await ProcessResponse1(response);
             }
             catch (Exception ex)
             {
@@ -161,15 +162,13 @@ namespace Kooboo.Lib.Helper
             }
             return null;
         }
-         
-        private static async Task<DownloadContent> ProcessResponse1(HttpResponseMessage response)
-        {
-            byte[] databytes = await response.Content.ReadAsByteArrayAsync();
 
+        internal static async Task<DownloadContent> ProcessResponse1(HttpResponseMessage response)
+        {
             DownloadContent downcontent = new DownloadContent();
 
-            downcontent.ResponseHeader = response.Headers; 
-       
+            downcontent.ResponseHeader = response.Headers;
+
             if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Moved && response.StatusCode != HttpStatusCode.Found)
             {
                 downcontent.StatusCode = 0;
@@ -187,25 +186,62 @@ namespace Kooboo.Lib.Helper
                 downcontent.ContentType = contentType.ToLower();
             }
 
+            var databytes = await GetDataBytes(response); 
             downcontent.DataBytes = databytes;
 
             if (string.IsNullOrEmpty(downcontent.ContentType) || IOHelper.IsStringType(downcontent.ContentType))
             {
                 downcontent.isString = true;
 
-                var encoding = EncodingDetector.GetEncoding(ref databytes, contentType);
-                if (encoding != null)
-                {
+                if (databytes != null)
+                { 
+                    var encoding = EncodingDetector.GetEncoding(ref databytes, contentType);
+                    if (encoding == null) return downcontent;
                     downcontent.ContentString = encoding.GetString(databytes);
-                    downcontent.Encoding = encoding.WebName;
-                }
-            }
-            else
-            { 
-                downcontent.isString = false;
-            }
+                    downcontent.Encoding = encoding.WebName; 
+                } 
+            } 
 
             return downcontent;
+        }
+
+        private static async Task<byte[]> GetDataBytes(HttpResponseMessage response)
+        {
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            Stream stream = responseStream;
+            try
+            {
+                //support common compression methods:gzip and deflate
+                if (response.Content.Headers.ContentEncoding != null)
+                {
+                    if (response.Content.Headers.ContentEncoding.Contains("gzip"))
+                    {
+                        stream = new GZipStream(responseStream, CompressionMode.Decompress);
+                    }
+                    else if (response.Content.Headers.ContentEncoding.Contains("deflate"))
+                    {
+                        stream = new DeflateStream(responseStream, CompressionMode.Decompress);
+                    }
+                }
+
+                using (var memory = new MemoryStream())
+                {
+                    await stream.CopyToAsync(memory);
+                    return memory.ToArray();
+                }
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+                stream.Close();
+                responseStream.Close();
+            }
+
+            return null;
+
         }
 
         private static DownloadContent ProcessResponse(HttpWebResponse httpWebResponse)
@@ -278,7 +314,7 @@ namespace Kooboo.Lib.Helper
             }
             return null;
         }
-         
+
         public static HttpWebResponse RequestHeader(Uri uri)
         {
             ServicePointManager.DefaultConnectionLimit = 512;
@@ -299,7 +335,7 @@ namespace Kooboo.Lib.Helper
             }
             return null;
         }
-         
+
         public static string RedirectUrl(HttpWebResponse webresponse)
         {
             return webresponse.Headers["Location"];
@@ -314,37 +350,11 @@ namespace Kooboo.Lib.Helper
             }
             return false;
         }
-
-        public static HttpClient CreateHttpClient(CookieContainer cookiecontainer)
-        { 
-            HttpClientHandler handler = new HttpClientHandler();
-            if (cookiecontainer == null)
-            {
-                handler.CookieContainer = new CookieContainer();
-            }
-            else
-            {
-                handler.CookieContainer = cookiecontainer; 
-            }
-       
-            handler.Proxy = null;
-            handler.AllowAutoRedirect = true; 
-            
-            HttpClient client = new HttpClient(handler);
-            client.Timeout = new TimeSpan(0, 0, 45);
-
-            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("*/*"));
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36");
-            client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
-            //client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.8"); 
-
-            return client;
-        }
     }
 
     public class DownloadContent
-    { 
-    
+    {
+
 
         public bool isString { get; set; }
 
@@ -385,7 +395,7 @@ namespace Kooboo.Lib.Helper
         protected override WebRequest GetWebRequest(Uri uri)
         {
             WebRequest w = base.GetWebRequest(uri);
-            w.Timeout = 10000;
+            w.Timeout = 30000;
             return w;
         }
     }

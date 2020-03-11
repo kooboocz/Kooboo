@@ -1,4 +1,6 @@
-﻿using Kooboo.Data;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data;
 using Kooboo.Data.Models;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Service;
@@ -41,16 +43,14 @@ namespace Kooboo.Web.Api.Implementation
             }
         }
 
-
         public Dictionary<string, string> Types(ApiCall call)
         {
             Dictionary<string, string> types = new Dictionary<string, string>();
-            types.Add("p", Data.Language.Hardcoded.GetValue("public"));
-            types.Add("o", Data.Language.Hardcoded.GetValue("private"));
-            types.Add("m", Data.Language.Hardcoded.GetValue("member"));   
+            types.Add("p", Data.Language.Hardcoded.GetValue("public", call.Context));
+            types.Add("o", Data.Language.Hardcoded.GetValue("private", call.Context));
+            types.Add("m", Data.Language.Hardcoded.GetValue("member", call.Context));
             return types;
         }
-
 
         public SiteCultureViewModel Langs(ApiCall request)
         {
@@ -141,9 +141,10 @@ namespace Kooboo.Web.Api.Implementation
                 summary.SiteDisplayName = item.DisplayName;
                 summary.PageCount = sitedb.Pages.Count();
                 summary.ImageCount = sitedb.Images.Count();
+                // if user has not right to access the site. present the preview link.  
 
                 summary.Online = item.Published;
-                summary.Visitors = sitedb.VisitorLog.QueryDescending(o => true).EndQueryCondition(o => o.Begin < DateTime.UtcNow.AddHours(-24)).Count();
+                summary.Visitors = sitedb.VisitorLog.QueryDescending(o => true).EndQueryCondition(o => o.Begin < DateTime.UtcNow.AddHours(-12)).Count();
 
                 var alltask = sitedb.TransferTasks.All();
 
@@ -159,12 +160,13 @@ namespace Kooboo.Web.Api.Implementation
                     }
                 }
 
+                summary.HomePageLink = item.BaseUrl();
                 result.Add(summary);
             }
             return result;
         }
 
-        public BinaryResponse Export(ApiCall call)
+        public virtual BinaryResponse Export(ApiCall call)
         {
             var site = call.WebSite;
             if (site == null)
@@ -174,13 +176,21 @@ namespace Kooboo.Web.Api.Implementation
             var exportfile = ImportExport.ExportInter(site.SiteDb());
             var path = System.IO.Path.GetFullPath(exportfile);
 
+            string name = site.DisplayName; 
+            if (string.IsNullOrEmpty(name))
+            {
+                name = site.Name; 
+            }
+
+            name = Lib.Helper.StringHelper.ToValidFileName(name); 
+
             if (File.Exists(exportfile))
             {
                 var allbytes = System.IO.File.ReadAllBytes(path);
 
                 BinaryResponse response = new BinaryResponse();
                 response.ContentType = "application/zip";
-                response.Headers.Add("Content-Disposition", $"attachment;filename={site.Name}.zip");
+                response.Headers.Add("Content-Disposition", $"attachment;filename={name}.zip");
                 response.BinaryBytes = allbytes;
                 return response;
             }
@@ -188,7 +198,7 @@ namespace Kooboo.Web.Api.Implementation
         }
 
         [Attributes.RequireParameters("stores")]
-        public BinaryResponse ExportStore(ApiCall call)
+        public virtual BinaryResponse ExportStore(ApiCall call)
         {
             var site = call.WebSite;
             if (site == null)
@@ -256,6 +266,22 @@ namespace Kooboo.Web.Api.Implementation
             Data.GlobalDb.WebSites.AddOrUpdate(site);
         }
 
+
+        public void Preview(ApiCall call, Guid SiteId)
+        {
+            var site = Kooboo.Data.GlobalDb.WebSites.Get(SiteId);
+            if (site != null)
+            {
+                var baseurl = site.BaseUrl();
+
+                if (!string.IsNullOrEmpty(baseurl))
+                {
+                    call.Context.Response.Redirect(301, baseurl);
+                }
+            }
+
+        }
+
         public WebSite Get(ApiCall call)
         {
             string strsiteid = call.GetValue("siteid");
@@ -305,7 +331,7 @@ namespace Kooboo.Web.Api.Implementation
                 currentsite.AutoDetectCulture = newinfo.AutoDetectCulture;
                 currentsite.ForceSSL = newinfo.ForceSSL;
 
-                currentsite.SiteType = newinfo.SiteType; 
+                currentsite.SiteType = newinfo.SiteType;
 
                 // the cluster... 
 
@@ -411,6 +437,7 @@ namespace Kooboo.Web.Api.Implementation
 
         public WebSite Create(ApiCall call)
         {
+            Sites.DataSources.DataSourceHelper.InitIDataSource();
             string fulldomain = call.GetValue("FullDomain");
             if (string.IsNullOrEmpty(fulldomain))
             {
@@ -440,6 +467,11 @@ namespace Kooboo.Web.Api.Implementation
                 return false;
             }
 
+            if (RootDomain != null && RootDomain.StartsWith("."))
+            {
+                RootDomain = RootDomain.Substring(1);
+            }
+
             var bindings = GlobalDb.Bindings.GetByDomain(RootDomain);
             foreach (var item in bindings)
             {
@@ -453,27 +485,21 @@ namespace Kooboo.Web.Api.Implementation
 
         public Guid ImportSite(ApiCall call)
         {
-            var formresult = Kooboo.Lib.NETMultiplePart.FormReader.ReadForm(call.Context.Request.PostData);
+            var files = call.Context.Request.Files;
 
-            if (formresult.Files.Count() == 0)
+            if (files == null || files.Count() == 0)
             {
                 return default(Guid);
             }
-
+            
             string RootDomain = null;
             string SubDomain = null;
             string SiteName = null;
-            if (formresult.FormData.ContainsKey("RootDomain"))
+            if (call.Context.Request.Forms != null)
             {
-                RootDomain = formresult.FormData["RootDomain"];
-            }
-            if (formresult.FormData.ContainsKey("SubDomain"))
-            {
-                SubDomain = formresult.FormData["SubDomain"];
-            }
-            if (formresult.FormData.ContainsKey("SiteName"))
-            {
-                SiteName = formresult.FormData["SiteName"];
+                RootDomain = call.Context.Request.Forms["RootDomain"];
+                SubDomain = call.Context.Request.Forms["SubDomain"];
+                SiteName = call.Context.Request.Forms["SiteName"];
             }
 
             if (string.IsNullOrEmpty(SiteName) || string.IsNullOrEmpty(RootDomain))
@@ -483,8 +509,7 @@ namespace Kooboo.Web.Api.Implementation
 
             string fulldomain = string.IsNullOrEmpty(SubDomain) ? RootDomain : SubDomain + "." + RootDomain;
 
-            var newsite = ImportExport.ImportZip(new MemoryStream(formresult.Files[0].Bytes), call.Context.User.CurrentOrgId, SiteName, fulldomain, call.Context.User.Id);
-
+            var newsite = ImportExport.ImportZip(new MemoryStream(files[0].Bytes), call.Context.User.CurrentOrgId, SiteName, fulldomain, call.Context.User.Id);
             return newsite.Id;
         }
 

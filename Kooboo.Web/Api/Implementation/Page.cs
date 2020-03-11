@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Sites.Extensions;
 using Kooboo.Sites.Models;
 using Kooboo.Sites.Repository;
@@ -103,7 +105,7 @@ namespace Kooboo.Web.Api.Implementation
         {
             // optional type.  
             string baseurl = call.Context.WebSite.BaseUrl();
-
+            baseurl = Kooboo.Data.Service.WebSiteService.EnsureHttpsBaseUrlOnServer(baseurl, call.Context.WebSite);  
             Guid PageId = call.ObjectId;
             var sitedb = call.WebSite.SiteDb();
 
@@ -271,8 +273,10 @@ namespace Kooboo.Web.Api.Implementation
                 if (oldpage == null)
                 {
                     return model.Id;
-                }      
+                }
 
+                page.DefaultStart = oldpage.DefaultStart;
+                page.IsSecure = oldpage.IsSecure; 
      
                 sitedb.Pages.AddOrUpdate(page, call.Context.User.Id);
 

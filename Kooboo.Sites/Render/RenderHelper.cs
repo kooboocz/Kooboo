@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Dom;
 using System;
 using System.Collections.Generic;
@@ -113,17 +115,17 @@ namespace Kooboo.Sites.Render
             return sb.ToString();
         }
 
-        public static string ModelBind(object Model, string Html, string ModelName="model")
+        public static string ModelBind(object Model, string Html, string ModelName = "model")
         {
             if (Model == null)
             {
-                return Html; 
+                return Html;
             }
             RenderContext context = new RenderContext();
             context.DataContext.Push(ModelName, Model);
 
             var plans = RenderEvaluator.Evaluate(Html, new EvaluatorOption());
-            return Render(plans, context);  
+            return Render(plans, context);
         }
     }
 }

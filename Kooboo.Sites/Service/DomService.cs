@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using Kooboo.Dom;
 using System.Text;
@@ -44,8 +46,7 @@ namespace Kooboo.Sites.Service
 
                     newHtml.Append(" ").Append(Kooboo.Sites.SiteConstants.KoobooIdAttributeName).AppendFormat("=\"{0}\"", koobooid);
 
-                    currentIndex = openTokenEndIndex;
-
+                    currentIndex = openTokenEndIndex; 
 
                 }
 
@@ -58,6 +59,30 @@ namespace Kooboo.Sites.Service
             }
 
             return newHtml.ToString();
+
+        }
+
+        public static string EnsureDocType(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return input; 
+            }
+
+            int len = input.Length-10;
+            if (len >500)
+            {
+                len = 500; 
+            }
+
+            // <!DOCTYPE html>
+            var sub = input.Substring(0, len); 
+            if (!sub.ToLower().Contains("<!DOCTYPE"))
+            {
+                input = "<!DOCTYPE html>\r\n" + input; 
+            } 
+
+            return input; 
 
         }
 

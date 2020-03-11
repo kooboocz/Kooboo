@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -518,7 +520,7 @@ namespace Kooboo.IndexedDB.Btree
 
             MemoryTreeNode foundleaf = MemoryTreeNodeManager.FindLeafByKey(this, this.RootCache, keybytes);
 
-            if (!foundleaf.TreeNode.KeyArray.ContainsKey(keybytes))
+            if (foundleaf == null || !foundleaf.TreeNode.KeyArray.ContainsKey(keybytes))
             {
                 return KeyList;
             }

@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Context;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Context;
 using Kooboo.Render.ObjectSource;
 using Kooboo.Sites.Render;
 using Kooboo.Lib;
@@ -82,8 +84,6 @@ namespace Kooboo.Render
                     {
                         response.BinaryBytes = sourceprovider.GetBinary(Context, relativeurl);
                     }
-                    
-  
                      
                     break;
                 case UrlFileType.Html:
@@ -151,7 +151,10 @@ namespace Kooboo.Render
 
             var hashid = Lib.Security.Hash.ComputeHashGuid(htmlbody);
 
-            var RenderPlan = RenderPlanCache.GetOrAddRenderPlan(hashid, () => RenderEvaluator.Evaluate(htmlbody, new EvaluatorOption()));
+            var EvaluatorOption = new EvaluatorOption();
+            EvaluatorOption.Evaluators = Kooboo.Render.Components.EvaluatorContainer.ListWithServerComponent; 
+             
+            var RenderPlan = RenderPlanCache.GetOrAddRenderPlan(hashid, () => RenderEvaluator.Evaluate(htmlbody, EvaluatorOption));
 
             string result = Kooboo.Sites.Render.RenderHelper.Render(RenderPlan, Context);
 
@@ -168,5 +171,7 @@ namespace Kooboo.Render
 
             return response;
         }
+         
+         
     }
 }

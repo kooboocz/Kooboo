@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kooboo.IndexedDB;
@@ -237,15 +239,6 @@ namespace Kooboo.Data.Repository
                     }
                 }
 
-                // TEMP. remove all thetheme.com binding. 
-                var alldomains = Kooboo.Data.Hosts.WindowsHost.GetList();
-                foreach (var item in alldomains)
-                {
-                    if (!string.IsNullOrEmpty(item.Domain) && item.Domain.ToLower().EndsWith("thetheme.com"))
-                    {
-                        Data.Hosts.WindowsHost.Delete(item.Domain);
-                    }
-                }
             }
 
             WindowsHost.AddOrUpdate(AppSettings.DefaultLocalHost, "127.0.0.1");

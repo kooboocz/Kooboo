@@ -1,21 +1,30 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kooboo.Sites.Scripting.Global
+namespace KScript
 {
-  public  class Security
+    public class Security
     {
+        [Description(@"Compute a 32 length text string value
+var input = ""myvalue"";  
+    var md5value = k.security.md5(input); ")]
         public string md5(string input)
         {
-            Guid id = Lib.Security.Hash.ComputeHashGuid(input);
+            Guid id = Kooboo.Lib.Security.Hash.ComputeHashGuid(input);
             return id.ToString("N");
         }
 
+        [Description(@"Compute a 40 length text string value
+  var input = ""myvalue"";  
+     var shavalue = k.security.sha1(input); ")]
         public string sha1(string input)
         {
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(input);
@@ -23,9 +32,9 @@ namespace Kooboo.Sites.Scripting.Global
 
             var hash = cryptoTransformSHA1.ComputeHash(bytes);
 
-            return HexStringFromBytes(hash);  
+            return HexStringFromBytes(hash);
         }
-             
+
         private string HexStringFromBytes(byte[] bytes)
         {
             var sb = new StringBuilder();
@@ -37,15 +46,38 @@ namespace Kooboo.Sites.Scripting.Global
             return sb.ToString();
         }
 
-
+        [Description(@"Two-way encryption
+var input = ""myvalue""; 
+     var key = ""hashkey"";  
+     var encrptyValue = k.security.encrypt(input, key);   
+     var decryptValue = k.security.decrypt(encrptyValue, key);")]
         public string encrypt(string input, string key)
         {
-            return EncryptHelper.EncryptString(input, key); 
+            return EncryptHelper.EncryptString(input, key);
         }
 
+        [Description(@"Two-way encryption
+var input = ""myvalue""; 
+     var key = ""hashkey"";  
+     var encrptyValue = k.security.encrypt(input, key);   
+     var decryptValue = k.security.decrypt(encrptyValue, key);")]
         public string decrypt(string input, string key)
         {
-            return EncryptHelper.DecryptString(input, key); 
+            return EncryptHelper.DecryptString(input, key);
+        }
+
+        [Description("Convert to base64 format string")]
+        public string ToBase64(string input)
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(input); 
+            return Convert.ToBase64String(bytes);
+        }
+
+        [Description("Convert from base64 string")]
+        public string FromBase64(string base64string)
+        {
+            var bytes = Convert.FromBase64String(base64string);
+            return System.Text.Encoding.UTF8.GetString(bytes);
         }
     }
 
@@ -96,4 +128,4 @@ namespace Kooboo.Sites.Scripting.Global
         }
     }
 
-}   
+}

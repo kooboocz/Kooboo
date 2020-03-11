@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System.Collections.Generic;
 using System.Text;
 using Kooboo.Dom;
 using Kooboo.Data.Context;
@@ -15,10 +17,12 @@ namespace Kooboo.Sites.Render
 
         private bool IsRepeatCondition { get; set; }
 
-        private  FilterDefinition Filter { get; set; }
+        private FilterDefinition Filter { get; set; }
 
         private ValueRenderTask ValueRenderTask { get; set; }
-         
+
+        private ValueRenderTask CompareValueRenderTask { get; set; }
+
         public ConditionRenderTask(Element element, string ConditionText, EvaluatorOption options)
         {
             if (ConditionText.ToLower().StartsWith("repeat"))
@@ -27,13 +31,15 @@ namespace Kooboo.Sites.Render
                 this.ConditionText = GetConditionText(ConditionText);
             }
             else
-            { 
-                this.Filter = FilterHelper.GetFilter(ConditionText); 
+            {
+                this.Filter = FilterHelper.GetFilter(ConditionText);
+                 FilterHelper.CheckValueType(this.Filter); 
             }
             string NewElementString = Service.DomService.ReSerializeElement(element);
 
             this.SubTasks = RenderEvaluator.Evaluate(NewElementString, options);
         }
+         
 
         public string Render(RenderContext context)
         {
@@ -68,24 +74,69 @@ namespace Kooboo.Sites.Render
         {
             if (this.IsRepeatCondition)
             {
-                return context.DataContext.RepeatCounter.Check(this.ConditionText); 
+                return context.DataContext.RepeatCounter.Check(this.ConditionText);
             }
             else
             {
-                if(this.Filter !=null)
+                if (this.Filter != null)
                 {
-                    if (this.ValueRenderTask == null)
+                    string value = null; 
+                    if (this.Filter.IsNameValueType)
                     {
-                        this.ValueRenderTask = new ValueRenderTask(this.Filter.FieldName); 
+                        value = this.Filter.FieldName; 
                     }
+                    else
+                    {
+                        if (this.ValueRenderTask == null)
+                        {
+                            this.ValueRenderTask = new ValueRenderTask(this.Filter.FieldName);
+                        }
 
-                    var value = this.ValueRenderTask.Render(context);
+                       value = this.ValueRenderTask.Render(context);
+                    }
+                   
+
                     if (value == null)
                     {
-                        return false;
-                    } 
-                  return FilterHelper.Check(value.ToString(), this.Filter.Comparer, this.Filter.FieldValue); 
-                } 
+                        // TODO: add more k-system fields. 
+                        if (this.Filter.FieldName == "k-index")
+                        {
+                            value = context.DataContext.RepeatCounter.CurrentCounter.Current.ToString();
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+
+
+                    string comparevalue = null;
+                    if (this.Filter.IsValueValueType)
+                    {
+                        comparevalue = this.Filter.FieldValue;
+                    }
+                    else
+                    {
+                        if (this.CompareValueRenderTask == null)
+                        {
+                            this.CompareValueRenderTask = new ValueRenderTask(this.Filter.FieldValue);
+                        }
+
+                        var contextcomparevalue = this.CompareValueRenderTask.Render(context); 
+
+                        if (!string.IsNullOrWhiteSpace(contextcomparevalue))
+                        {
+                            comparevalue = contextcomparevalue; 
+                        } 
+                        else
+                        {
+                            comparevalue = this.Filter.FieldValue; 
+                        }
+                    }
+
+
+                    return FilterHelper.Check(value.ToString(), this.Filter.Comparer, comparevalue);
+                }
             }
 
             return false;
@@ -123,7 +174,7 @@ namespace Kooboo.Sites.Render
 
     public class ConditionFilter
     {
-        public string KeyOrExpression { get; set; } 
+        public string KeyOrExpression { get; set; }
     }
 }
 

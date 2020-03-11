@@ -1,4 +1,6 @@
-﻿using Kooboo.Dom;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Dom;
 using Kooboo.Dom.CSS;
 using Kooboo.IndexedDB;
 using Kooboo.Sites.Contents.Models;
@@ -16,9 +18,7 @@ namespace Kooboo.Sites.Repository
 {
     public class CmsCssRuleRepository : SiteRepositoryBase<CmsCssRule>
     {
-        private object _locker = new object();
-
-        internal override ObjectStoreParameters StoreParameters
+        public override ObjectStoreParameters StoreParameters
         {
             get
             {

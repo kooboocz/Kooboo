@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +15,7 @@ namespace Kooboo.Mail.Queue
 
         public DiskQueueStore(string rootpath)
         {
-            this.Root = System.IO.Path.Combine(rootpath, "Mailing");
+            this.Root = rootpath;
 
             this.IncomingFolder = System.IO.Path.Combine(this.Root, "Incoming");
             Lib.Helper.IOHelper.EnsureDirectoryExists(this.IncomingFolder);
@@ -198,7 +200,7 @@ namespace Kooboo.Mail.Queue
                 filename = System.Guid.NewGuid().ToString() + ".mail";
                 path = System.IO.Path.Combine(this.SentFolder, filename);
                 return path;
-            }        
+            }
         }
 
     }

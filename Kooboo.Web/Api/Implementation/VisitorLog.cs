@@ -1,4 +1,6 @@
-﻿using Kooboo.Api;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Api;
 using Kooboo.Data.Models;
 using Kooboo.IndexedDB;
 using Kooboo.Sites.Extensions;
@@ -49,7 +51,7 @@ namespace Kooboo.Web.Api.Implementation
 
             PagedListViewModel<VisitorLog> result = new PagedListViewModel<VisitorLog>();
 
-            var alllog = log.AllItemList();
+            var alllog = log.Take(false, 0, Kooboo.Data.AppSettings.MaxVisitorLogRead);  
 
             var total = alllog.Count();
             result.TotalCount = total;

@@ -1,4 +1,6 @@
-﻿using Kooboo.Sites.Contents.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Sites.Contents.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,6 +37,7 @@ namespace Kooboo.Web.ViewModel
 
     public class ContentFolderViewModel : Kooboo.Sites.Contents.Models.ContentFolder
     {
+        
         public Dictionary<string, int> Relations { get; set; }
 
         public static ContentFolderViewModel Create(ContentFolder folder)

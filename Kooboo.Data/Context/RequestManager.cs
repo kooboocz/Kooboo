@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -26,12 +28,13 @@ namespace Kooboo.Data.Context
             return request.Headers.Get(name);
         }
 
-        private static string TryGetValue(HttpRequest request, string name)
+        private static string TryGetValue(HttpRequest request, string name,bool needDecode=true)
         {
             string Value = request.QueryString.Get(name);
             if (!string.IsNullOrEmpty(Value))
             {
-                Value = System.Net.WebUtility.UrlDecode(Value);
+                if(needDecode)
+                    Value = System.Net.WebUtility.UrlDecode(Value);
                 return Value;
             }
 
@@ -55,7 +58,7 @@ namespace Kooboo.Data.Context
             if (!string.IsNullOrEmpty(request.Body))
             {
                 string body = request.Body;
-                if (Kooboo.Lib.Reflection.TypeHelper.IsJson(body))
+                if (Kooboo.Lib.Helper.JsonHelper.IsJson(body))
                 {
                     try
                     {
@@ -123,9 +126,9 @@ namespace Kooboo.Data.Context
             return Value;
         }
 
-        public static string GetValue(HttpRequest request, string key)
+        public static string GetValue(HttpRequest request, string key,bool needDecode=true)
         {
-            return TryGetValue(request, key);
+            return TryGetValue(request, key,needDecode);
         }
 
         public static string GetValue(HttpRequest request, params string[] names)

@@ -1,4 +1,6 @@
-﻿using System;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -69,6 +71,18 @@ namespace Kooboo.Api
 
             return newtotal < totalcount ? number + 1 : number;  
 
+        }
+
+        public static List<Parameter> GetParameters(System.Reflection.MethodInfo method)
+        {
+            List<Parameter> result = new List<Parameter>(); 
+
+            var paras = method.GetParameters();
+            foreach (var item in paras)
+            {
+                result.Add(new Parameter() { Name = item.Name, ClrType = item.ParameterType });
+            }
+            return result; 
         }
     }
 

@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Definition;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Definition;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
@@ -8,8 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Kooboo.Sites.Ecommerce.Models
-{
-   
+{ 
     public class ProductProperty
     {
         public ProductProperty()
@@ -87,10 +88,5 @@ namespace Kooboo.Sites.Ecommerce.Models
             return Lib.Security.Hash.ComputeIntCaseSensitive(unique);
         }
     }
-
-
-
-
-
-
+  
 }

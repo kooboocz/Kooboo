@@ -1,4 +1,6 @@
-﻿using Kooboo.Data.Models;
+//Copyright (c) 2018 Yardi Technology Limited. Http://www.kooboo.com 
+//All rights reserved.
+using Kooboo.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,30 +38,42 @@ namespace Kooboo.Web.Api.Implementation
             }
         }
 
-        public DomainInfo ServerInfo(ApiCall call)
+        public virtual DomainInfo ServerInfo(ApiCall call)
         {
-            DomainInfo info = new DomainInfo();
-            info.DnsServers = new List<string>();
+           DomainInfo info = new DomainInfo();
+           // info.DnsServers = new List<string>(); 
+           // if (!string.IsNullOrEmpty(AppSettings.ServerSetting.Ns1))
+           // {
+           //     info.DnsServers.Add(Kooboo.Data.AppSettings.ServerSetting.Ns1);
+           // }
+           // if (Kooboo.Data.AppSettings.ServerSetting.Ns2 != null)
+           // {
+           //     info.DnsServers.Add(Kooboo.Data.AppSettings.ServerSetting.Ns2);
+           // }
 
-            if (!string.IsNullOrEmpty(AppSettings.ServerSetting.Ns1))
-            {
-                info.DnsServers.Add(Kooboo.Data.AppSettings.ServerSetting.Ns1);
-            }
-            if (Kooboo.Data.AppSettings.ServerSetting.Ns2 != null)
-            {
-                info.DnsServers.Add(Kooboo.Data.AppSettings.ServerSetting.Ns2);
-            }
+           // if (info.DnsServers.Count < 2)
+           // {
+           //     info.DnsServers.Add("ns1.dnscall.org");
+           //     info.DnsServers.Add("ns2.dnscall.org");
+           // }
 
-            if (info.DnsServers.Count < 2)
-            {
-                info.DnsServers.Add("ns1.dnscall.org");
-                info.DnsServers.Add("ns2.dnscall.org");
-            }
+           // var orgname = Kooboo.Data.GlobalDb.Organization.GetName(call.Context.User.Id);
 
-            if (Data.AppSettings.ServerSetting.Ips != null && Data.AppSettings.ServerSetting.Ips.Count > 0)
-            {
-                info.IPAddress = AppSettings.ServerSetting.Ips.First();
-            }
+           // string subname = null; 
+           // if (orgname !=null)
+           // {
+           //     subname = orgname; 
+           // }
+           // else
+           // {
+           //     subname = AppSettings.ServerSetting.ServerId.ToString(); 
+           // } 
+           // info.CName = subname + "." + AppSettings.ServerSetting.HostDomain; 
+           //if (Data.AppSettings.ServerSetting.Ips != null && Data.AppSettings.ServerSetting.Ips.Count > 0)
+           // {
+           //     info.IPAddress = AppSettings.ServerSetting.Ips.First();
+           // }
+
             return info;
         }
 
@@ -67,6 +81,8 @@ namespace Kooboo.Web.Api.Implementation
         {
             public List<string> DnsServers { get; set; }
             public string IPAddress { get; set; }
+
+            public string CName { get; set; }
         }
 
         public List<Domain> Available(ApiCall apiCall)
@@ -197,8 +213,6 @@ namespace Kooboo.Web.Api.Implementation
             return false;
         }
 
-
-
         public void Create(string domainname, ApiCall call)
         {
             var rootdomain = Kooboo.Data.Helper.DomainHelper.GetRootDomain(domainname);
@@ -216,45 +230,7 @@ namespace Kooboo.Web.Api.Implementation
 
             GlobalDb.Domains.AddOrUpdate(domain);
         }
-
-        public List<DomainPriceViewModel> Search(string domain, ApiCall call)
-        {
-            string searchurl = Data.Helper.AccountUrlHelper.Domain("search");
-
-            Dictionary<string, string> para = new Dictionary<string, string>();
-            para.Add("domain", domain);
-
-            return Lib.Helper.HttpHelper.Get<List<DomainPriceViewModel>>(searchurl, para);
-        }
-
-        [Attributes.RequireModel(typeof(PaymentRequest))]
-        public PaymentResponse PayDomain(ApiCall call)
-        {
-            PaymentRequest paymentRequest = call.Context.Request.Model as PaymentRequest;
-            var redirectUrl = string.Format("{0}://{1}:{2}/_Admin/Domains", call.Context.Request.Scheme, call.Context.Request.Host, call.Context.Request.Port);
-            paymentRequest.PaypalReturnUrl = string.Format("{0}://{1}:{2}/_api/payment/PaypalReturn?redirectUrl={3}",
-                call.Context.Request.Scheme, call.Context.Request.Host, call.Context.Request.Port, System.Net.WebUtility.UrlEncode(redirectUrl));
-            return Kooboo.Data.Service.CommerceService.PayDomain(paymentRequest);
-        }
-
-        // TODO: Should move to commerce api.
-        [Attributes.RequireParameters("paymentId", "organizationId")]
-        public PaymentStatusResponse PaymentStatus(ApiCall call)
-        {
-            Guid paymentId = call.GetGuidValue("paymentId");
-            Guid organizationId = call.GetGuidValue("organizationId");
-            return Data.Service.CommerceService.PaymentStatus(organizationId, paymentId);
-        }
-
-
-        public bool PayTwoCheckoutTest(string token, ApiCall call)
-        {
-            return Data.Service.CommerceService.PayTwoCheckoutTest(token);
-        }
-
-
-
-
+        
     }
 
 
